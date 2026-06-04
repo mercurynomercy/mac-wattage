@@ -1,0 +1,110 @@
+import Foundation
+
+/// Repeating timer that collects hardware metrics, estimates power consumption, and logs the result.
+/// Thread-safe: metric reads happen on a background queue; UI updates are dispatched to the main thread.
+public final class CollectionTimer {
+
+    private var timer: Timer?
+    /// Serial background queue for hardware metric reads — keeps IOKit calls off the main thread.
+    private let collectQueue: DispatchQueue
+
+    /// Collection interval in seconds (read from settings).
+    private let interval: Int
+    /// Hardware metrics reader — CPU/GPU utilization and battery state.
+    private let metrics: IOKitAdapterProtocol
+    /// TDP-based power estimator — translates utilization fractions to watts.
+    private let estimator: PowerEstimatorProtocol
+    /// Persistent log service — writes records to disk.
+    private let logService: PowerLogServiceProtocol
+
+    /// UI update callback, invoked on the main thread with each new record.
+    private let uiUpdate: @MainActor (PowerRecord) -> Void
+
+    /// Weak-reference wrapper so the timer selector can reach this instance without a retain cycle.
+    private class TimerTarget {
+        weak var owner: CollectionTimer?
+
+        func collect() { owner?.doCollect() }
+    }
+
+    private var timerTarget: TimerTarget?
+
+    // MARK: - Init / Lifecycle
+
+    public init(
+        interval: Int,
+        metrics: IOKitAdapterProtocol,
+        estimator: PowerEstimatorProtocol,
+        logService: PowerLogServiceProtocol,
+        uiUpdate: @escaping @MainActor (PowerRecord) -> Void
+    ) {
+        self.interval = interval
+        self.metrics = metrics
+        self.estimator = estimator
+        self.logService = logService
+        self.uiUpdate = uiUpdate
+
+        // Serial queue for metric reads — ordered, non-concurrent IOKit calls.
+        self.collectQueue = DispatchQueue(
+            label: "com.macwattage.scheduler.collect", qos: .userInitiated)
+
+        self.timerTarget = TimerTarget()
+    }
+
+    /// Start collection: read immediately, then repeat at the configured interval.
+    public func start() {
+        // Collect right away so there's no gap before the first data point.
+        collect()
+
+        timerTarget?.owner = self
+
+        // Timer fires on the main run loop; work is dispatched to collectQueue.
+        timer = Timer.scheduledTimer(
+            timeInterval: Double(interval), target: self, selector: #selector(collectTimerFired(_:)), userInfo: nil, repeats: true)
+    }
+
+    /// Stop collection and invalidate the timer. The instance can be restarted with `start()`.
+    public func stop() {
+        timer?.invalidate()
+        timer = nil
+        timerTarget?.owner = nil
+    }
+
+    // MARK: - Timer Callbacks
+
+    @objc private func collectTimerFired(_ timer: Timer) {
+        timerTarget?.collect()
+    }
+
+    private func doCollect() {
+        collectQueue.async { [weak self] in
+            guard let self else { return }
+
+            // Read hardware metrics (non-blocking — returns 0.0 on failure).
+            let cpuUtil = self.metrics.cpuUtilization()
+            let gpuUtil = self.metrics.gpuUtilization()
+
+            // Estimate total system power from utilization fractions.
+            let watts = self.estimator.estimateSystemPower(from: cpuUtil, gpuUtil: gpuUtil)
+
+            // Charging state is nil for desktop Macs without batteries.
+            let isCharging = self.metrics.isCharging()
+
+            // Build the record — id and timestamp are auto-generated defaults.
+            let record = PowerRecord(watts: watts, isCharging: isCharging)
+
+            // Fire-and-forget write to persistent storage (ignore errors).
+            Task { try? await self.logService.append(record) }
+
+            // Push to UI on the main thread.
+            DispatchQueue.main.async { [uiUpdate] in
+                uiUpdate(record)
+            }
+        }
+    }
+
+    // MARK: - Internal for testing / direct invocation (called by timer)
+
+    /// Dispatch a single collection cycle to the background queue.
+    private func collect() { doCollect() }
+}

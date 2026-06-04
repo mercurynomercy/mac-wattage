@@ -1,0 +1,501 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		01E5F1153293823C22274021 /* RotationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E161B2ADCB02EC032ACE2C /* RotationManager.swift */; };
+		098F1CB7C7F2EF44DB34C105 /* SettingsWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C94B4E210358919F4D076FD /* SettingsWindowView.swift */; };
+		23A49A62E4FEFE943F459D9C /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE3FBAF6CD63AC97C05F7B63 /* Logger.swift */; };
+		375002CCA23887DCA2EBE9D6 /* SparklineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A96AEC41DAB4F01AA22FCF57 /* SparklineView.swift */; };
+		3BD9692C4FF9393A04CA2A89 /* CollectionTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 606D12E1069EB23E5C081C04 /* CollectionTimer.swift */; };
+		423E379DF6DC90E2E48B54A6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 551727E953CFCFED535B856C /* AppDelegate.swift */; };
+		42618AE1D0F440F6FDDB7664 /* MonthlyTotalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5F1B5CDA012B6E7D29F387D /* MonthlyTotalsView.swift */; };
+		46C964D0B9A863B58B0FEE2D /* BarChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 393407142075F94A5528AE63 /* BarChartView.swift */; };
+		4FEFA4420210C02E53622525 /* PlatformDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA4CD4737867B21CE6995FBB /* PlatformDetector.swift */; };
+		6EA8F8ACD26994437599155A /* PowerPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A22ED881AAC936339D0592D1 /* PowerPopoverView.swift */; };
+		87D85E02CAFE8CF9FCF0D1C0 /* PowerLogService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE539309C3B6CDE190E70980 /* PowerLogService.swift */; };
+		880E66025F499AB6675C53F7 /* PowerRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = D75B316811D34E2D3DD08260 /* PowerRecord.swift */; };
+		8A6820CF4EDADE1135AE95F6 /* PopoverViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10C25A342054EFB97792477 /* PopoverViewModel.swift */; };
+		8CCFC5864D5D9C04C24DAFDB /* MacWattageApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBC2C4DC97FA20FE05205C39 /* MacWattageApp.swift */; };
+		99B1F9F694E2182D138E3D33 /* MenuBarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2488C4987EF5D7C64DDE2BF0 /* MenuBarViewModel.swift */; };
+		9AE6DE862DDC2EE4972688B2 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = B35DE5C4837AB6A1029B4862 /* Store.swift */; };
+		C4D96BF4513D2873359C4F11 /* PowerEstimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79CCCF8EFEDA14DF2FB2303B /* PowerEstimator.swift */; };
+		E50416192B13722C0B1FDF6F /* MenuBarWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA03515DE58B95DB297EB876 /* MenuBarWidgetView.swift */; };
+		FF6DD8B7C196C83A13EE4B9C /* IOKitAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F92248A21D6141F22C6C0409 /* IOKitAdapter.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1FA4BE6A64767E76329EEAE7 /* MacWattageTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacWattageTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2488C4987EF5D7C64DDE2BF0 /* MenuBarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarViewModel.swift; sourceTree = "<group>"; };
+		393407142075F94A5528AE63 /* BarChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarChartView.swift; sourceTree = "<group>"; };
+		3C94B4E210358919F4D076FD /* SettingsWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowView.swift; sourceTree = "<group>"; };
+		551727E953CFCFED535B856C /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		58E161B2ADCB02EC032ACE2C /* RotationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RotationManager.swift; sourceTree = "<group>"; };
+		606D12E1069EB23E5C081C04 /* CollectionTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionTimer.swift; sourceTree = "<group>"; };
+		79CCCF8EFEDA14DF2FB2303B /* PowerEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerEstimator.swift; sourceTree = "<group>"; };
+		80583298CB27B6E9B6B094E6 /* MacWattage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacWattage.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10C25A342054EFB97792477 /* PopoverViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverViewModel.swift; sourceTree = "<group>"; };
+		A22ED881AAC936339D0592D1 /* PowerPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerPopoverView.swift; sourceTree = "<group>"; };
+		A5F1B5CDA012B6E7D29F387D /* MonthlyTotalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthlyTotalsView.swift; sourceTree = "<group>"; };
+		A96AEC41DAB4F01AA22FCF57 /* SparklineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparklineView.swift; sourceTree = "<group>"; };
+		B35DE5C4837AB6A1029B4862 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
+		BBC2C4DC97FA20FE05205C39 /* MacWattageApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacWattageApp.swift; sourceTree = "<group>"; };
+		D75B316811D34E2D3DD08260 /* PowerRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerRecord.swift; sourceTree = "<group>"; };
+		DA03515DE58B95DB297EB876 /* MenuBarWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarWidgetView.swift; sourceTree = "<group>"; };
+		DE3FBAF6CD63AC97C05F7B63 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		DE539309C3B6CDE190E70980 /* PowerLogService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerLogService.swift; sourceTree = "<group>"; };
+		EA4CD4737867B21CE6995FBB /* PlatformDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformDetector.swift; sourceTree = "<group>"; };
+		F92248A21D6141F22C6C0409 /* IOKitAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOKitAdapter.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0FA5E5389BF8ED7C9A8DF5FC /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				DE539309C3B6CDE190E70980 /* PowerLogService.swift */,
+				D75B316811D34E2D3DD08260 /* PowerRecord.swift */,
+				58E161B2ADCB02EC032ACE2C /* RotationManager.swift */,
+				B35DE5C4837AB6A1029B4862 /* Store.swift */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		290FB3F0643C64261C501381 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				DE3FBAF6CD63AC97C05F7B63 /* Logger.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		2D24E14F54279419E90B6A8C /* Charts */ = {
+			isa = PBXGroup;
+			children = (
+				393407142075F94A5528AE63 /* BarChartView.swift */,
+				A5F1B5CDA012B6E7D29F387D /* MonthlyTotalsView.swift */,
+				A96AEC41DAB4F01AA22FCF57 /* SparklineView.swift */,
+			);
+			path = Charts;
+			sourceTree = "<group>";
+		};
+		565488E56ED4B78F64E3CF55 /* Scheduler */ = {
+			isa = PBXGroup;
+			children = (
+				606D12E1069EB23E5C081C04 /* CollectionTimer.swift */,
+			);
+			path = Scheduler;
+			sourceTree = "<group>";
+		};
+		5D903F0DE9A69748EE55F790 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				2488C4987EF5D7C64DDE2BF0 /* MenuBarViewModel.swift */,
+				A10C25A342054EFB97792477 /* PopoverViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		8440C36849987EDE08954285 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				80583298CB27B6E9B6B094E6 /* MacWattage.app */,
+				1FA4BE6A64767E76329EEAE7 /* MacWattageTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9860C60FF761B1899F200615 = {
+			isa = PBXGroup;
+			children = (
+				CF18BB850A42C131896F8535 /* MacWattage */,
+				8440C36849987EDE08954285 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B4C50DADB84CE678E72D4938 /* Metrics */ = {
+			isa = PBXGroup;
+			children = (
+				F92248A21D6141F22C6C0409 /* IOKitAdapter.swift */,
+				EA4CD4737867B21CE6995FBB /* PlatformDetector.swift */,
+				79CCCF8EFEDA14DF2FB2303B /* PowerEstimator.swift */,
+			);
+			path = Metrics;
+			sourceTree = "<group>";
+		};
+		C850334F4B71DCD7DBB7F75A /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				DA03515DE58B95DB297EB876 /* MenuBarWidgetView.swift */,
+				A22ED881AAC936339D0592D1 /* PowerPopoverView.swift */,
+				3C94B4E210358919F4D076FD /* SettingsWindowView.swift */,
+				2D24E14F54279419E90B6A8C /* Charts */,
+				5D903F0DE9A69748EE55F790 /* ViewModels */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		CF18BB850A42C131896F8535 /* MacWattage */ = {
+			isa = PBXGroup;
+			children = (
+				551727E953CFCFED535B856C /* AppDelegate.swift */,
+				BBC2C4DC97FA20FE05205C39 /* MacWattageApp.swift */,
+				0FA5E5389BF8ED7C9A8DF5FC /* Data */,
+				B4C50DADB84CE678E72D4938 /* Metrics */,
+				565488E56ED4B78F64E3CF55 /* Scheduler */,
+				290FB3F0643C64261C501381 /* Shared */,
+				C850334F4B71DCD7DBB7F75A /* UI */,
+			
+			D8A1B2C3E4F50607 /* PlatformSupport.m */,);
+			path = MacWattage;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3957D23EFC7D76937338A58E /* MacWattageTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A0786FB26FD781D4A82A5FD /* Build configuration list for PBXNativeTarget "MacWattageTests" */;
+			buildPhases = (
+				695CF2B1EC745EC89E19E29A /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MacWattageTests;
+			packageProductDependencies = (
+			);
+			productName = MacWattageTests;
+			productReference = 1FA4BE6A64767E76329EEAE7 /* MacWattageTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		515F0857E4C18C1508344A78 /* MacWattage */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4A45A822747DEC7A4B4C1686 /* Build configuration list for PBXNativeTarget "MacWattage" */;
+			buildPhases = (
+				87995187A05C0F57B3679DAC /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MacWattage;
+			packageProductDependencies = (
+			);
+			productName = MacWattage;
+			productReference = 80583298CB27B6E9B6B094E6 /* MacWattage.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F1A196C811FB5300EDC44EE3 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1400;
+				TargetAttributes = {
+					515F0857E4C18C1508344A78 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = 38CE7F06399B39C80B33A962 /* Build configuration list for PBXProject "MacWattage" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 9860C60FF761B1899F200615;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 8440C36849987EDE08954285 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				515F0857E4C18C1508344A78 /* MacWattage */,
+				3957D23EFC7D76937338A58E /* MacWattageTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		695CF2B1EC745EC89E19E29A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+					1235FA3631EB95FEED32D8C20FF00 /* Mocks.swift in Sources */,
+					5E67471CC4EF5FECF0F2EF970FF01 /* PlatformDetectorTests.swift in Sources */,
+					C77213F93D147D90E497480FF02 /* PowerEstimatorTests.swift in Sources */,
+					8CF36114D646BA487D00F90FF03 /* PowerLogServiceTests.swift in Sources */,
+					E6F4F56A0000AB9686FB5D0FF04 /* RotationManagerTests.swift in Sources */,
+					B6F58BA4D62BBBE6E0342C0FF05 /* StoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		87995187A05C0F57B3679DAC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D8A1B2C3E4F50607 /* PlatformSupport.m in Sources */,
+			423E379DF6DC90E2E48B54A6 /* AppDelegate.swift in Sources */,
+				46C964D0B9A863B58B0FEE2D /* BarChartView.swift in Sources */,
+				3BD9692C4FF9393A04CA2A89 /* CollectionTimer.swift in Sources */,
+				FF6DD8B7C196C83A13EE4B9C /* IOKitAdapter.swift in Sources */,
+				23A49A62E4FEFE943F459D9C /* Logger.swift in Sources */,
+				8CCFC5864D5D9C04C24DAFDB /* MacWattageApp.swift in Sources */,
+				99B1F9F694E2182D138E3D33 /* MenuBarViewModel.swift in Sources */,
+				E50416192B13722C0B1FDF6F /* MenuBarWidgetView.swift in Sources */,
+				42618AE1D0F440F6FDDB7664 /* MonthlyTotalsView.swift in Sources */,
+				4FEFA4420210C02E53622525 /* PlatformDetector.swift in Sources */,
+				8A6820CF4EDADE1135AE95F6 /* PopoverViewModel.swift in Sources */,
+				C4D96BF4513D2873359C4F11 /* PowerEstimator.swift in Sources */,
+				87D85E02CAFE8CF9FCF0D1C0 /* PowerLogService.swift in Sources */,
+				6EA8F8ACD26994437599155A /* PowerPopoverView.swift in Sources */,
+				880E66025F499AB6675C53F7 /* PowerRecord.swift in Sources */,
+				01E5F1153293823C22274021 /* RotationManager.swift in Sources */,
+				098F1CB7C7F2EF44DB34C105 /* SettingsWindowView.swift in Sources */,
+				375002CCA23887DCA2EBE9D6 /* SparklineView.swift in Sources */,
+				9AE6DE862DDC2EE4972688B2 /* Store.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		4B4259D75B5458767A94F03B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LSUIElement = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.macwattage.app;
+				SDKROOT = macosx;
+				OBJECTIVE_C_BRIDGING_HEADER = MacWattage/MacWattage-Bridging-Header.h;
+				SUPPORTED_PLATFORMS = macosx;
+			};
+			name = Debug;
+		};
+		54ACBDE99B20DC84104232D2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LSUIElement = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.macwattage.app;
+				SDKROOT = macosx;
+				OBJECTIVE_C_BRIDGING_HEADER = MacWattage/MacWattage-Bridging-Header.h;
+				SUPPORTED_PLATFORMS = macosx;
+			};
+			name = Release;
+		};
+		6B87DBEE61194CB1B0D0D6E3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.macwattage.tests;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		C6643D9EFB37EEEC715DB607 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		ED1F02DA6338EEA81B634F6F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		F9E08A3676BD2BC3AF234191 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.macwattage.tests;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		38CE7F06399B39C80B33A962 /* Build configuration list for PBXProject "MacWattage" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ED1F02DA6338EEA81B634F6F /* Debug */,
+				C6643D9EFB37EEEC715DB607 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4A45A822747DEC7A4B4C1686 /* Build configuration list for PBXNativeTarget "MacWattage" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4B4259D75B5458767A94F03B /* Debug */,
+				54ACBDE99B20DC84104232D2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7A0786FB26FD781D4A82A5FD /* Build configuration list for PBXNativeTarget "MacWattageTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6B87DBEE61194CB1B0D0D6E3 /* Debug */,
+				F9E08A3676BD2BC3AF234191 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F1A196C811FB5300EDC44EE3 /* Project object */;
+}

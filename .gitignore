@@ -1,0 +1,17 @@
+# Xcode user data and build artifacts
+*.xcuserdata
+*.xcworkspace
+DerivedData/
+build/
+.build/
+*.pbxuser
+!.pbxproj
+.mode1v3
+.mode2v3
+.perspectivev3
+
+# Xcode shared schemes (generated, not needed in repo)
+MacWattage.xcodeproj/xcuserdata/
+
+# macOS
+.DS_Store
