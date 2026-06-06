@@ -24,6 +24,7 @@
 		99B1F9F694E2182D138E3D33 /* MenuBarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2488C4987EF5D7C64DDE2BF0 /* MenuBarViewModel.swift */; };
 		9AE6DE862DDC2EE4972688B2 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = B35DE5C4837AB6A1029B4862 /* Store.swift */; };
 		C4D96BF4513D2873359C4F11 /* PowerEstimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79CCCF8EFEDA14DF2FB2303B /* PowerEstimator.swift */; };
+		1277A717B04298A1D2B50A305BE68A10 /* PowerConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7880C0F413F1817BBA6A2EC7EDA9D1D /* PowerConfig.swift */; };
 		E50416192B13722C0B1FDF6F /* MenuBarWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA03515DE58B95DB297EB876 /* MenuBarWidgetView.swift */; };
 		FF6DD8B7C196C83A13EE4B9C /* IOKitAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F92248A21D6141F22C6C0409 /* IOKitAdapter.swift */; };
 		D6E7F8A9B0C123456789ABCD /* IOKitImplementation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D6E7F8A9B0123456789ABC /* IOKitImplementation.swift */; };
@@ -39,6 +40,7 @@
 		58E161B2ADCB02EC032ACE2C /* RotationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RotationManager.swift; sourceTree = "<group>"; };
 		606D12E1069EB23E5C081C04 /* CollectionTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionTimer.swift; sourceTree = "<group>"; };
 		79CCCF8EFEDA14DF2FB2303B /* PowerEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerEstimator.swift; sourceTree = "<group>"; };
+		F7880C0F413F1817BBA6A2EC7EDA9D1D /* PowerConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerConfig.swift; sourceTree = "<group>"; };
 		80583298CB27B6E9B6B094E6 /* MacWattage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacWattage.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10C25A342054EFB97792477 /* PopoverViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverViewModel.swift; sourceTree = "<group>"; };
 		A22ED881AAC936339D0592D1 /* PowerPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerPopoverView.swift; sourceTree = "<group>"; };
@@ -126,6 +128,7 @@
 			C5D6E7F8A9B0123456789ABC /* IOKitImplementation.swift */,
 				EA4CD4737867B21CE6995FBB /* PlatformDetector.swift */,
 				79CCCF8EFEDA14DF2FB2303B /* PowerEstimator.swift */,
+			F7880C0F413F1817BBA6A2EC7EDA9D1D /* PowerConfig.swift */,
 			);
 			path = Metrics;
 			sourceTree = "<group>";
@@ -260,6 +263,7 @@
 				4FEFA4420210C02E53622525 /* PlatformDetector.swift in Sources */,
 				8A6820CF4EDADE1135AE95F6 /* PopoverViewModel.swift in Sources */,
 				C4D96BF4513D2873359C4F11 /* PowerEstimator.swift in Sources */,
+				1277A717B04298A1D2B50A305BE68A10 /* PowerConfig.swift in Sources */,
 				87D85E02CAFE8CF9FCF0D1C0 /* PowerLogService.swift in Sources */,
 				6EA8F8ACD26994437599155A /* PowerPopoverView.swift in Sources */,
 				880E66025F499AB6675C53F7 /* PowerRecord.swift in Sources */,

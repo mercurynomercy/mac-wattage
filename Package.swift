@@ -17,6 +17,7 @@ let package = Package(
             sources: [
                 "Shared/Logger.swift",
                 "Metrics/IOKitAdapter.swift",
+                "Metrics/PowerConfig.swift",
                 "Metrics/PowerEstimator.swift",
                 "Metrics/PlatformDetector.swift",
                 "Data/PowerRecord.swift",
@@ -26,6 +27,8 @@ let package = Package(
             ],
             linkerSettings: [
                 .linkedFramework("Foundation"),
+                .linkedFramework("IOKit"),
+                .linkedFramework("CoreFoundation"),
             ]
         ),
         .testTarget(

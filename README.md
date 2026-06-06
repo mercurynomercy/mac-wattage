@@ -66,44 +66,93 @@ macOS **不提供直接的系统总瓦数 API**，Mac Wattage 采用**基于 TDP
 
 每秒通过以下系统 API 读取硬件指标：
 
-| 数据 | macOS API | 说明 |
-|------|-----------|------|
-| CPU 利用率 | `host_statistics64(HOST_CPU_LOAD_INFO)` | 内核返回自开机以来每个 CPU state（用户态/系统态/空闲）的累计 tick 数，取相邻两次采集的差值计算忙闲比例 |
-| GPU 利用率 | `sysctl(hw.mem_pressure)` | Apple Silicon 无公开 GPU 专用 API，以系统内存压力作为代理指标——LLM、视频渲染等重负载会推高内存压力 |
-| 充电状态 | `IOServiceMatching("AppleSmartBattery")` | 检测 Mac 是否有电池（MacBook vs Mac Studio），有则返回充电状态，无则为 nil |
+| 数据 | macOS API / Source | 说明 |
+|------|-------------------|------|
+| CPU 利用率 | `host_statistics64(HOST_CPU_LOAD_INFO)` | 内核返回自开机以来每个 CPU state（用户态/系统态/空闲）的累计 tick 数，取相邻两次采集差值计算忙闲比例 |
+| GPU 利用率 | `sysctl(hw.mem_pressure)`（代理指标） | Apple Silicon 无公开 GPU 专用 API，以系统内存压力作为代理——LLM、视频渲染等重负载会推高内存压力 |
+| 充电状态 / 平台类型 | `IOServiceMatching("AppleSmartBattery")` | 有电池 → MacBook，无电池 → Mac Studio/Mini；同时返回充电状态（仅笔记本） |
+| 芯片代际 | `sysctl("machdep.cpu.brand_string")` | "M1 Ultra" / "M2 Pro Max" 等，用于选择 TDP 参数 |
+| RAM 容量 | `sysctl("hw.memsize")` | 决定 Memory Coefficient |
+| 风扇型号 | IOKit device tree `fan-backend-types` / `model` | none/single/dual/turbo，影响风扇功耗估算 |
+| 屏幕状态 | IOKit `AppleBacklightDisplay.DisplayPowerState` | 0 = off → 强制 idle load，风扇功耗归零 |
 
 #### 计算公式
 
 ```
-estimatedWatts = idlePower + cpuUtil × (cpuMaxTDP - idlePower) + gpuUtil × gpuMaxGPU
+combinedLoad = 0.6 × clampedCPU + 0.4 × clampedGPU
+loadFactor   = f(combinedLoad)        // 离散阈值映射
+watts        = SoC_TDP × loadFactor × memoryCoefficient + baseConsumption + fanPower
 ```
 
-- `idlePower` — 系统空闲功耗（基础功耗 + 漏电）
-- `cpuUtil`、`gpuUtil` — CPU/GPU 利用率，范围 [0.0, 1.0]
-- `cpuMaxTDP`、`gpuMaxGPU` — 对应芯片的最大 TDP
+**1) 利用率钳位与组合负载：** CPU/GPU 输入 [0, ∞) 先 clamp 到 [0.0, 1.0]，再按 `60% CPU + 40% GPU` 加权。
 
-各芯片代际参数：
+**2) Load Factor（负载因子）— 按组合利用率映射到离散档位：**
 
-| 芯片 | Idle (W) | CPU Max TDP (W) | GPU Max (W) |
-|------|-----------|-----------------|-------------|
-| M1/M2 Base | 5 | 40 | 15 |
-| Pro | 8 | 60 | 30 |
-| Max | 12 | 100 | 60 |
-| Ultra | 15 | 120 | 80 |
+| 工况 | combinedLoad 范围 | Load Factor |
+|------|-------------------|-------------|
+| 空闲（屏幕关闭） | — | 0.03 |
+| 轻载 | < 0.40 | 0.25 |
+| 中载 | < 0.70 | 0.55 |
+| 重载 | < 1.00 | 0.85 |
+| 满载 | ≥ 1.00 | 1.00 |
+
+**3) Memory Coefficient（内存系数）— 按物理 RAM 容量缩放：**
+
+| RAM | 系数 |
+|-----|------|
+| ≤8 GB | 1.00 |
+| 16 GB | 1.05 |
+| 24–32 GB | 1.10 |
+| 64 GB | 1.18 |
+| 96–128 GB | 1.28 |
+| 192–256 GB | 1.40 |
+
+**4) Base Consumption（基础功耗）— SSD + 主板最低消耗：**
+
+| 平台 | 值 (W) |
+|------|--------|
+| MacBook（笔记本） | 5.0 |
+| Mac Studio/Mini/Mac mini（桌面） | 12.0 |
+
+**5) Fan Power（风扇功耗）— 按风扇型号与有效负载：**
+
+| 风扇类型 | 满载功率 (W) |
+|---------|-------------|
+| none（无风扇） | 0 |
+| single（单风扇） | 3.0 × effectiveLoad |
+| dual（双风扇） | 6.0 × effectiveLoad |
+| turbo（涡轮/液冷） | 12.0 × effectiveLoad |
+
+> `effectiveLoad = loadFactor`（屏幕关闭时强制为 0.03，风扇功耗归零）。
+
+**各芯片 SoC TDP：**
+
+| 芯片代际 | TDP (W) |
+|---------|--------|
+| M1/M2 Base | 20 |
+| M1 Pro / M2 Pro | 35 |
+| M1 Max / M2 Max | 61 |
+| M1 Ultra | 95–103 (取中值) |
 
 #### 计算示例
 
-MacBook Pro M1 Max，CPU 60%、GPU 80%（LLM 推理场景）：
+MacBook Pro M1 Max，CPU 60%、GPU 80%，32 GB RAM：
 
 ```
-watts = 12 + 0.6 × (100 - 12) + 0.8 × 60
-      = 12   +    52.8     +    48
-      ≈ 113W
+clampedCPU = min(1.0, 0.6) = 0.6
+clampedGPU = min(1.0, 0.8) = 0.8
+combinedLoad = 0.6 × 0.6 + 0.4 × 0.8 = 0.36 + 0.32 = 0.68
+loadFactor   → medium (0.55)            // < 0.70
+memoryCoeff  → 1.10                     // 32 GB
+
+watts = 56 × 0.55 × 1.10 + 5.0 (laptop) + 6.0 × 0.55 (dual fan)
+      = 33.88 + 5.0   +    3.3
+      ≈ 42W
 ```
 
 > **注意：** 以上为估算值而非实测瓦数。Apple Silicon SoC 的功耗传感器不对外部应用开放，因此结果存在一定误差范围。
 
-平台检测通过 `IOServiceGetMatchingServices("AppleSmartBattery")` 区分 Mac Studio（无电池）和 MacBook。
+**平台检测：** 通过 `IOServiceGetMatchingServices("AppleSmartBattery")` 区分 Mac Studio（无电池 → desktop）和 MacBook。额外检测芯片代际 (`sysctl machdep.cpu.brand_string`)、RAM 容量 (`hw.memsize`)、风扇型号 (IOKit device tree `fan-backend-types` / `model`) 和屏幕状态 (`DisplayPowerState`)。
 
 ---
 
@@ -123,7 +172,7 @@ watts = 12 + 0.6 × (100 - 12) + 0.8 × 60
 |------|------|
 | **语言** | Swift 6+ (strict concurrency, Sendable / actors) |
 | **UI** | SwiftUI + AppKit 集成 (MenuBarExtra, macOS 13+) |
-| **硬件 API** | IOKit (`host_processor_info`, `IOServiceMatching`) |
+| **硬件 API** | IOKit (`host_statistics64`, `IOServiceMatching`, device tree) + sysctl |
 | **存储** | BinaryPropertyList + UserDefaults |
 | **图表** | 纯 SwiftUI Path / Rectangle，零第三方库 |
 
@@ -155,12 +204,12 @@ swift build
 ## 测试覆盖
 
 ```bash
-swift test   # 37 tests, all passing ✅
+swift test   # 44 tests, all passing ✅
 ```
 
 | 测试模块 | 文件数 | 用例数 | 覆盖范围 |
 |---------|--------|--------|---------|
-| PowerEstimatorTests | 1 | 15 | TDP估算模型、芯片代际排序、边界值钳位 |
+| PowerEstimatorTests | 1 | 22 | TDP估算模型（公式、load factor / memory coefficient / fan power）、芯片代际排序与对比、边界值钳位（负数/超1.0）、屏幕关闭强制idle |
 | PowerLogServiceTests | 1 | 14 | 追加记录、会话统计（基于120秒窗口）、日平均、清除全部、文件持久化、秒级缓冲 flush |
 | PlatformDetectorTests | 1 | 2 | 平台检测 / 芯片识别（运行时验证） |
 | RotationManagerTests | 1 | 2 | 跨月轮转触发 / 同月跳过 |

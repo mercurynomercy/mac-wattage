@@ -34,9 +34,8 @@ struct MacWattageApp: App {
     }
 
     private func setupApp() -> (timer: CollectionTimer, flushTimer: Timer?, service: PowerLogServiceProtocol) {
-        // 1. Detect hardware platform and chip generation (one-time, side-effect for UI decisions elsewhere).
-        _ = PlatformDetector.detectPlatform()
-        let chipGeneration = PlatformDetector.detectChipGeneration()
+        // 1. Detect full hardware profile (platform, chip, RAM, fan model, screen state).
+        let hwProfile = PlatformDetector.detectHardwareProfile()
 
         // 2. Create app store (reads/writes UserDefaults).
         let store = Store()
@@ -51,8 +50,8 @@ struct MacWattageApp: App {
         // 5. Create metrics pipeline (hardware reads → power estimation).
         let adapter = IOKitAdapter()
 
-        // Default to studio (desktop) — chip generation drives the profile selection.
-        let estimator = PowerEstimator(platform: .studio, chipGeneration: chipGeneration)
+        // Create estimator with full hardware profile for accurate TDP-based estimation.
+        let estimator = PowerEstimator(profile: hwProfile)
 
         // 6. Wire up UI update callback to shared view models.
         let menuBarVM = MenuBarViewModel.shared
