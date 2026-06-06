@@ -6,10 +6,10 @@ import SwiftUI
     static let shared = MenuBarViewModel()
 
     /// Most recent power reading in watts.
-    @Published var currentWatts: Double = 0
+    @Published @MainActor var currentWatts: Double = 0
 
     /// Sparkline data points, maximum of 36 values.
-    @Published var sparklineData: [Double] = []
+    @Published @MainActor var sparklineData: [Double] = []
 
     private init() {}
 

@@ -61,6 +61,7 @@ struct MacWattageApp: App {
             uiUpdate: { record in
                 menuBarVM.update(with: record)
                 popoverVM.currentWatts = record.watts
+                popoverVM.updateSparkline(with: record)
             }
         )
 

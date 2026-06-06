@@ -20,6 +20,9 @@ import SwiftUI
     /// Monthly total kWh for the last 12 months.
     @Published var monthlyTotals: [MonthlyTotal] = []
 
+    /// Sparkline data points for live chart, maximum of 36 values.
+    @Published var sparklineData: [Double] = []
+
     /// Whether there is meaningful data to display beyond zero values.
     var hasData: Bool { !dailyAverages.isEmpty || !monthlyTotals.isEmpty }
 
@@ -41,6 +44,14 @@ import SwiftUI
         monthlyTotals = service.monthlyTotals(for: 12)
     }
 
+    /// Append a new reading to the sparkline buffer (max 36 points).
+    func updateSparkline(with record: PowerRecord) {
+        sparklineData.append(record.watts)
+        if sparklineData.count > 36 {
+            sparklineData = Array(sparklineData.suffix(36))
+        }
+    }
+
     /// Reset all state. Called when data is cleared via notification.
     func reset() {
         currentWatts = 0
@@ -48,6 +59,7 @@ import SwiftUI
         sessionPeak = 0
         dailyAverages.removeAll()
         monthlyTotals.removeAll()
+        sparklineData.removeAll(keepingCapacity: true)
     }
 
     private var service: PowerLogServiceProtocol? = nil

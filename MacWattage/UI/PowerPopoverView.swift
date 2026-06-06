@@ -7,6 +7,8 @@ struct PowerPopoverView: View {
         VStack(spacing: 16) {
             currentWattsSection
 
+            liveChartSection
+
             Divider()
 
             sevenDayChartSection
@@ -31,20 +33,30 @@ struct PowerPopoverView: View {
             if viewModel.hasData {
                 Text("\(viewModel.currentWatts, specifier: "%.0f")W")
                     .font(.system(size: 32, weight: .bold, design: .monospaced))
+                    .foregroundColor(.primary)
 
-                HStack(spacing: 12) {
-                    Text("Avg: \(viewModel.sessionAverage, specifier: "%.0f")W")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-
-                    Text("Peak: \(viewModel.sessionPeak, specifier: "%.0f")W")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+                Text("Avg: \(viewModel.sessionAverage, specifier: "%.0f")W · Peak: \(viewModel.sessionPeak, specifier: "%.0f")W")
+                    .font(.caption)
             } else {
                 Text("Collecting data...")
                     .font(.caption)
                     .foregroundColor(.secondary)
+            }
+        }
+    }
+
+    private var liveChartSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Live Power")
+                .font(.headline)
+
+            if viewModel.sparklineData.count < 2 {
+                Text("Collecting data...")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            } else {
+                SparklineView(values: viewModel.sparklineData)
+                    .frame(height: 60)
             }
         }
     }
