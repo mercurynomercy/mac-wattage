@@ -21,10 +21,10 @@ public final class CollectionTimer {
     private let uiUpdate: @MainActor (PowerRecord) -> Void
 
     /// Weak-reference wrapper so the timer selector can reach this instance without a retain cycle.
-    private class TimerTarget {
+    private class TimerTarget: NSObject {
         weak var owner: CollectionTimer?
 
-        func collect() { owner?.doCollect() }
+        @objc func collect() { owner?.doCollect() }
     }
 
     private var timerTarget: TimerTarget?
@@ -59,8 +59,9 @@ public final class CollectionTimer {
         timerTarget?.owner = self
 
         // Timer fires on the main run loop; work is dispatched to collectQueue.
+        // Uses timerTarget (not self) as target to avoid a retain cycle.
         timer = Timer.scheduledTimer(
-            timeInterval: Double(interval), target: self, selector: #selector(collectTimerFired(_:)), userInfo: nil, repeats: true)
+            timeInterval: Double(interval), target: timerTarget!, selector: #selector(TimerTarget.collect), userInfo: nil, repeats: true)
 
         NSLog("[CollectionTimer] Timer started with interval=%ds, timer=%@", interval, String(describing: timer))
     }
@@ -72,11 +73,7 @@ public final class CollectionTimer {
         timerTarget?.owner = nil
     }
 
-    // MARK: - Timer Callbacks
-
-    @objc private func collectTimerFired(_ timer: Timer) {
-        timerTarget?.collect()
-    }
+    // MARK: - Collection
 
     private func doCollect() {
         NSLog("[CollectionTimer] doCollect firing")

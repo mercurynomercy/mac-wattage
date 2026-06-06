@@ -19,8 +19,10 @@ final class PlatformDetectorTests: XCTestCase {
         // We verify it doesn't crash and returns a valid ChipGeneration case.
         let chip = PlatformDetector.detectChipGeneration()
         switch chip {
-        case .m1Base, .m2Base, .m1Pro, .m2Pro,
-             .m1Max, .m2Max, .m1Ultra:
+        case .m1Base, .m2Base, .m3Base, .m4Base,
+             .m1Pro,  .m2Pro,  .m3Pro,  .m4Pro,
+             .m1Max,  .m2Max,  .m3Max,  .m4Max,
+             .m1Ultra, .m2Ultra, .m3Ultra:
             break // Valid enum cases
         }
     }

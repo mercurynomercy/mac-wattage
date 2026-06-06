@@ -30,6 +30,7 @@ struct SettingsWindowView: View {
     private var collectionIntervalSection: some View {
         Form {
             Picker("Collection Interval", selection: $store.collectionInterval) {
+                Text("Every second").tag(1)
                 Text("Every 10 seconds").tag(10)
                 Text("Every minute").tag(60)
             }

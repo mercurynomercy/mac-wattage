@@ -1,60 +1,5 @@
 import Foundation
 
-// MARK: - Load Factor Configuration (by utilization level)
-
-/// Discrete load factors for the estimation formula.
-/// Mapped from CPU/GPU utilization thresholds:
-///   idle (screen off)  < 0.15 → 0.03
-///   light              < 0.40 → 0.25
-///   medium             < 0.70 → 0.55
-///   heavy              < 1.00 → 0.85
-///   full               ≥ 1.00 → 1.00
-private let LOAD_FACTORS: [Double] = [0.03, 0.25, 0.55, 0.85, 1.0]
-
-func loadFactor(for cpuUtil: Double) -> Double {
-    let u = max(0.0, min(1.0, cpuUtil))
-    if u < 0.15 { return LOAD_FACTORS[0] } // idle (screen off)
-    if u < 0.40 { return LOAD_FACTORS[1] } // light
-    if u < 0.70 { return LOAD_FACTORS[2] } // medium
-    if u < 1.00 { return LOAD_FACTORS[3] } // heavy
-    return LOAD_FACTORS[4]                  // full load (1.0)
-}
-
-// MARK: - Memory Coefficients by RAM Size
-
-private let MEMORY_COEFFICIENTS: [(ramGB: Int, coefficient: Double)] = [
-    (8, 1.0),
-    (16, 1.05),
-    (24, 1.10),
-    (32, 1.10),
-    (48, 1.18),
-    (64, 1.18),
-    (96, 1.28),
-    (128, 1.28),
-    (192, 1.40),
-    (256, 1.40),
-]
-
-private func memoryCoefficient(for ramBytes: Int64) -> Double {
-    let ramGB = ramBytes / (1024 * 1024 * 1024)
-    // Find the largest entry ≤ ramGB (conservative — don't over-estimate memory)
-    var result = 1.0 // default for very small RAM (≤8 GB) or unknown
-    for entry in MEMORY_COEFFICIENTS {
-        if ramGB >= entry.ramGB { result = entry.coefficient } else { break }
-    }
-    return result
-}
-
-// MARK: - Base Consumption by Device Type
-
-/// Minimum system power (SSD + motherboard) when SoC is at zero load.
-private let BASE_CONSUMPTION: [MacPlatform: Double] = [.laptop: 5.0, .studio: 12.0]
-
-// MARK: - Fan Power by Device Type and Model
-
-/// Estimated fan power draw. Apple Silicon Macs without fans return 0.
-private let FAN_POWER: [MacPlatform: Double] = [.laptop: 3.0, .studio: 6.0]
-
 // MARK: - Chip TDP Configuration (SoC max power at full load)
 /// Representative TDP per chip generation. Uses mid-to-upper range of published specs.
 
@@ -83,9 +28,17 @@ private enum ChipTDP {
 ///   watts = SoC_TDP × loadFactor × memoryCoefficient + baseConsumption + fanPower
 func chipTDP(for generation: ChipGeneration) -> Double {
     switch generation {
-    case .m1Base,  .m2Base:     return ChipTDP.m1
-    case .m1Pro,   .m2Pro:      return ChipTDP.m1Pro
-    case .m1Max,   .m2Max:      return ChipTDP.m1Max
-    case .m1Ultra:              return ChipTDP.m1Ultra
+    case .m1Base, .m2Base:  return ChipTDP.m1
+    case .m3Base:           return ChipTDP.m3
+    case .m4Base:           return ChipTDP.m4
+    case .m1Pro, .m2Pro:    return ChipTDP.m1Pro
+    case .m3Pro:            return ChipTDP.m3Pro
+    case .m4Pro:            return ChipTDP.m4Pro
+    case .m1Max, .m2Max:    return ChipTDP.m1Max
+    case .m3Max:            return ChipTDP.m3Max
+    case .m4Max:            return ChipTDP.m4Max
+    case .m1Ultra:          return ChipTDP.m1Ultra
+    case .m2Ultra:          return ChipTDP.m2Ultra
+    case .m3Ultra:          return ChipTDP.m3Ultra
     }
 }

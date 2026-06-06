@@ -144,7 +144,6 @@ public final class PowerLogService: PowerLogServiceProtocol {
     public func sessionAverage() -> Double {
         let records = secondsBuffer  // Last ~120 one-second samples (~2 minutes)
         guard !records.isEmpty else { return 0.0 }
-        guard !records.isEmpty else { return 0.0 }
         let sum = records.reduce(0.0) { $0 + $1.watts }
         return sum / Double(records.count)
     }
@@ -155,7 +154,7 @@ public final class PowerLogService: PowerLogServiceProtocol {
     }
 
     public func currentWatts() -> Double {
-        dailyBuffer.last?.watts ?? 0.0
+        secondsBuffer.last?.watts ?? dailyBuffer.last?.watts ?? 0.0
     }
 
     // MARK: - Chart Data

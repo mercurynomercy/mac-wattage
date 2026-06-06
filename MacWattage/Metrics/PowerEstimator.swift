@@ -30,18 +30,16 @@ public final class PowerEstimator: PowerEstimatorProtocol {
         // Combined load signal: CPU primary, GPU secondary (50/50 blend).
         let combinedLoad = 0.6 * clampedCPU + 0.4 * clampedGPU
 
-        // Discrete load factor based on combined utilization level:
-        //   idle (screen off)  < 0.15 → 0.03
-        //   light              < 0.40 → 0.25
-        //   medium             < 0.70 → 0.55
-        //   heavy              < 1.00 → 0.85
-        //   full               ≥ 1.00 → 1.00
+        // Discrete load factor based on combined utilization level (screen-off is handled via effectiveLoad below):
+        //   light  < 0.40 → 0.25
+        //   medium < 0.70 → 0.55
+        //   heavy  < 1.00 → 0.85
+        //   full   ≥ 1.00 → 1.00
         let loadFactor: Double = {
-            if combinedLoad < 0.15 { return 0.03 } // idle (screen off)
             if combinedLoad < 0.40 { return 0.25 } // light
             if combinedLoad < 0.70 { return 0.55 } // medium
             if combinedLoad < 1.00 { return 0.85 } // heavy
-            return 1.0                            // full load (overridden by screenOff)
+            return 1.0                            // full load
         }()
 
         // If screen is off, force idle load factor regardless of CPU/GPU.
@@ -58,15 +56,14 @@ public final class PowerEstimator: PowerEstimatorProtocol {
             }
         }()
 
-        // Fan power draw (only active under load).
+        // Fan power draw (only active under load; fixed wattage per spec, not load-proportional).
         let fanPower: Double = {
-            // Fans are negligible at idle/light loads.
             if effectiveLoad < 0.3 { return 0.0 }
             switch profile.fanModel {
             case .none:    return 0.0
-            case .single:  return 3.0 * effectiveLoad // scales with load
-            case .dual:    return 6.0 * effectiveLoad
-            case .turbo:   return 12.0 * effectiveLoad
+            case .single:  return 3.0
+            case .dual:    return 6.0
+            case .turbo:   return 12.0
             }
         }()
 
@@ -82,7 +79,6 @@ public final class PowerEstimator: PowerEstimatorProtocol {
         let combinedLoad = 0.6 * clampedCPU + 0.4 * clampedGPU
 
         let loadFactor: Double = {
-            if combinedLoad < 0.15 { return 0.03 }
             if combinedLoad < 0.40 { return 0.25 }
             if combinedLoad < 0.70 { return 0.55 }
             if combinedLoad < 1.00 { return 0.85 }
@@ -109,8 +105,8 @@ public final class PowerEstimator: PowerEstimatorProtocol {
 private func memCoefficient(for ramBytes: Int64) -> Double {
     let ramGB = ramBytes / (1024 * 1024 * 1024)
     let entries: [(ramGB: Int, coefficient: Double)] = [
-        (8, 1.0), (16, 1.05), (32, 1.10),
-        (64, 1.18), (128, 1.28), (192, 1.40),
+        (8, 1.0), (16, 1.05), (24, 1.10),
+        (64, 1.18), (96, 1.28), (192, 1.40),
     ]
     var result = 1.0
     for entry in entries {

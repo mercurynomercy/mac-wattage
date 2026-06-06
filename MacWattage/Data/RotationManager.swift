@@ -4,6 +4,7 @@ import Foundation
 public final class RotationManager {
 
     private let userDefaults: UserDefaultsProtocol?
+    private let std = UserDefaults.standard
 
     /// Creates a manager with optional custom UserDefaults backing. Pass nil to use standard defaults.
     public init(userDefaults: UserDefaultsProtocol?) {
@@ -18,9 +19,8 @@ public final class RotationManager {
         formatter.dateFormat = "yyyy-MM"
         let currentMonthStr = formatter.string(from: Date())
 
-        if userDefaults?.string(forKey: "lastRotationMonth") == currentMonthStr {
-            return  // Already rotated this month
-        }
+        let last = userDefaults?.string(forKey: "lastRotationMonth") ?? std.string(forKey: "lastRotationMonth")
+        if last == currentMonthStr { return }
 
         performRotation(dailyService: dailyService, currentMonthStr: currentMonthStr)
     }
@@ -28,7 +28,8 @@ public final class RotationManager {
     private func performRotation(dailyService: PowerLogServiceProtocol, currentMonthStr: String) {
         // Save rotation timestamp early to prevent re-processing on next launch,
         // even if there are no old records to rotate.
-        userDefaults?.setAny(currentMonthStr, forKey: "lastRotationMonth")
+        if let d = userDefaults { d.setAny(currentMonthStr, forKey: "lastRotationMonth") }
+        else { std.set(currentMonthStr, forKey: "lastRotationMonth") }
 
         let calendar = Calendar(identifier: .gregorian)
 
@@ -61,7 +62,7 @@ public final class RotationManager {
         var newTotals: [MonthlyTotal] = grouped.map { yearMonth, records in
             let avgWatts = records.reduce(0.0) { $0 + $1.watts } / Double(records.count)
             // kWh = avgWatts × totalSeconds / (1000×3600), where seconds ≈ recordCount × collectionInterval
-            let totalKWh = (avgWatts * Double(records.count) * 10.0) / (1000.0 * 3600.0)
+            let totalKWh = (avgWatts * Double(records.count) * 60.0) / (1000.0 * 3600.0)
             return MonthlyTotal(id: UUID(), yearMonth: yearMonth, totalKWh: round(totalKWh * 100) / 100)
         }
 

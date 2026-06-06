@@ -9,7 +9,12 @@ public enum MacPlatform { case studio, laptop }
 public enum FanModel { case none, single, dual, turbo }
 
 /// Apple Silicon chip generation — used for power estimation profiles.
-public enum ChipGeneration { case m1Base, m2Base, m1Pro, m2Pro, m1Max, m2Max, m1Ultra }
+public enum ChipGeneration {
+    case m1Base, m2Base, m3Base, m4Base
+    case m1Pro,  m2Pro,  m3Pro,  m4Pro
+    case m1Max,  m2Max,  m3Max,  m4Max
+    case m1Ultra, m2Ultra, m3Ultra
+}
 
 /// Runtime hardware detection. Uses IOKit and sysctl — never throws, always returns a valid value.
 public enum PlatformDetector {
@@ -46,20 +51,30 @@ public enum PlatformDetector {
 
         let cpuString = String(cString: brand)
 
-        // Check Ultra first (most specific keyword match needed before Pro/Max)
-        if cpuString.contains("Ultra") { return .m1Ultra }
+        // Check Ultra first (must match before Pro/Max substrings)
+        if cpuString.contains("Ultra") {
+            if cpuString.contains("M3") { return .m3Ultra }
+            if cpuString.contains("M2") { return .m2Ultra }
+            return .m1Ultra
+        }
 
-        // Max vs Pro detection
         if cpuString.contains("Max") {
-            return cpuString.range(of: "M2", options: .backwards) != nil ? .m2Max : .m1Max
+            if cpuString.contains("M4") { return .m4Max }
+            if cpuString.contains("M3") { return .m3Max }
+            if cpuString.contains("M2") { return .m2Max }
+            return .m1Max
         }
 
         if cpuString.contains("Pro") {
-            return cpuString.range(of: "M2", options: .backwards) != nil ? .m2Pro : .m1Pro
+            if cpuString.contains("M4") { return .m4Pro }
+            if cpuString.contains("M3") { return .m3Pro }
+            if cpuString.contains("M2") { return .m2Pro }
+            return .m1Pro
         }
 
-        // Base chips — M2 has "Apple M2" in the string, older ones have "M1"
-        if cpuString.range(of: "M2", options: .backwards) != nil { return .m2Base }
+        if cpuString.contains("M4") { return .m4Base }
+        if cpuString.contains("M3") { return .m3Base }
+        if cpuString.contains("M2") { return .m2Base }
         return .m1Base
     }
 
@@ -188,8 +203,5 @@ public struct HardwareProfile {
     public var ramGB: Int {
         Int((ramSizeBytes + 1024 * 1024 * 1024 - 1) / (1024 * 1024 * 1024))
     }
-
-    /// Effective load factor: if screen is off, force idle regardless of CPU/GPU utilization.
-    public var effectiveLoadFactor: Double { screenOff ? 0.03 : loadFactor(for: 1.0) }
 }
 
