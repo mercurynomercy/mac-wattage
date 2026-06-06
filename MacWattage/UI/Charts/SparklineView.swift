@@ -12,18 +12,21 @@ struct SparklineView: View {
                 Path { path in
                     let count = values.count
 
-                    // Use a minimum range of 1.0 to prevent extreme scaling
-                    // when all values are nearly identical (avoids divide-by-zero).
+                    // Use percentage-based scaling so small variations (e.g. 22–23W)
+                    // remain visually meaningful even when absolute differences are tiny.
                     let maxVal = values.max() ?? 0.0
                     let minVal = values.min() ?? 0.0
-                    let range = max(maxVal - minVal, 1.0)
 
                     for (index, value) in values.enumerated() {
                         // Normalize x across [0, 1] then scale to chart width (40px).
                         let x = Double(index) / Double(count - 1) * 40.0
-                        // Normalize y across [0, 1] then invert (SwiftUI Y goes down)
-                        // and scale to chart height (14px).
-                        let y = 1.0 - (value - minVal) / range * 14.0
+                        // Normalize y using percentage of actual range, inverted (SwiftUI Y goes down),
+                        // and scaled to chart height (~20px). Clamp to [0, 1] so identical values
+                        // still render at the midpoint rather than clipping to an edge.
+                        let actualRange = maxVal - minVal
+                        let normalizedY: Double = actualRange > 0 ? (value - minVal) / actualRange : 0.5
+                        let clampedY = max(0.0, min(normalizedY, 1.0))
+                        let y = (1.0 - clampedY) * 20.0
 
                         if index == 0 {
                             path.move(to: CGPoint(x: x, y: y))
@@ -32,7 +35,7 @@ struct SparklineView: View {
                         }
                     }
                 }
-                .stroke(Color.primary, lineWidth: 1)
+                .stroke(Color.black, lineWidth: 1.5)
             }
         }
     }

@@ -18,7 +18,7 @@ struct BarChartView: View {
                 ForEach(data.indices, id: \.self) { index in
                     VStack(spacing: 2) {
                         Capsule()
-                            .fill(Color.primary)
+                            .fill(Color.black)
                             .frame(
                                 width: 16,
                                 height: max(CGFloat(data[index].averageWatts) * scale, 2)
