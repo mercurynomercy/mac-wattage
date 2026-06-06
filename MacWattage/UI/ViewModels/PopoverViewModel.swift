@@ -6,22 +6,22 @@ import SwiftUI
     static let shared = PopoverViewModel()
 
     /// Most recent power reading in watts.
-    @Published var currentWatts: Double = 0
+    @Published @MainActor var currentWatts: Double = 0
 
     /// Average watts over the last 1-hour rolling window.
-    @Published var sessionAverage: Double = 0
+    @Published @MainActor var sessionAverage: Double = 0
 
     /// Peak (max) watts over the last 1-hour window.
-    @Published var sessionPeak: Double = 0
+    @Published @MainActor var sessionPeak: Double = 0
 
     /// Daily average watts for the last 7 days.
-    @Published var dailyAverages: [DailyAverage] = []
+    @Published @MainActor var dailyAverages: [DailyAverage] = []
 
     /// Monthly total kWh for the last 12 months.
-    @Published var monthlyTotals: [MonthlyTotal] = []
+    @Published @MainActor var monthlyTotals: [MonthlyTotal] = []
 
     /// Sparkline data points for live chart, maximum of 36 values.
-    @Published var sparklineData: [Double] = []
+    @Published @MainActor var sparklineData: [Double] = []
 
     /// Whether there is meaningful data to display beyond zero values.
     var hasData: Bool { !dailyAverages.isEmpty || !monthlyTotals.isEmpty }

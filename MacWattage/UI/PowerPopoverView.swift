@@ -33,9 +33,10 @@ struct PowerPopoverView: View {
             if viewModel.hasData {
                 Text("\(viewModel.currentWatts, specifier: "%.0f")W")
                     .font(.system(size: 32, weight: .bold, design: .monospaced))
-                    .foregroundColor(.primary)
+                    .foregroundColor(.black)
 
                 Text("Avg: \(viewModel.sessionAverage, specifier: "%.0f")W · Peak: \(viewModel.sessionPeak, specifier: "%.0f")W")
+                    .foregroundColor(.black)
                     .font(.caption)
             } else {
                 Text("Collecting data...")
