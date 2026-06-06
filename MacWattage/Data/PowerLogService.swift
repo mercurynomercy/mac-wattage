@@ -84,7 +84,7 @@ public final class PowerLogService: PowerLogServiceProtocol {
             try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         } catch {
             #if DEBUG
-            print("[PowerLogService] Failed to create log directory '\(directory.path)': \(error.localizedDescription)")
+            NSLog("[PowerLogService] Failed to create log directory '\(directory.path)': \(error.localizedDescription)")
             #endif
         }
 
@@ -223,19 +223,30 @@ public final class PowerLogService: PowerLogServiceProtocol {
     // MARK: - Loading
 
     private func loadDailyBuffer() {
-        guard fileManager.fileExists(atPath: dailyLogURL.path) else { return }
+        guard fileManager.fileExists(atPath: dailyLogURL.path) else {
+            #if DEBUG
+            NSLog("[PowerLogService] loadDailyBuffer: file not found at \(dailyLogURL.path)")
+            #endif
+            return
+        }
 
         do {
             let data = try Data(contentsOf: dailyLogURL)
             // Try decoding as array of PowerRecord first (new format with id field)
             do {
                 dailyBuffer = try decoder.decode([PowerRecord].self, from: data)
+                #if DEBUG
+                NSLog("[PowerLogService] loadDailyBuffer: loaded \(dailyBuffer.count) records from daily-log.plist")
+                #endif
             } catch {
                 // Fallback to decoding as just [Double] (old format from previous versions)
                 dailyBuffer = []
             }
         } catch {
             // Corrupted file or decode error — start fresh with empty buffer
+            #if DEBUG
+            NSLog("[PowerLogService] loadDailyBuffer: decode failed — \(error.localizedDescription)")
+            #endif
             dailyBuffer = []
         }
     }

@@ -1,7 +1,9 @@
 import SwiftUI
 
 struct PowerPopoverView: View {
-    @ObservedObject var viewModel = PopoverViewModel.shared
+    private let viewModel = PopoverViewModel.shared
+
+    @State private var refreshTrigger: Bool = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -24,6 +26,8 @@ struct PowerPopoverView: View {
         .frame(width: 320)
         .padding()
         .onAppear { viewModel.refresh() } // Reload aggregated data when popover opens.
+        .onReceive(viewModel.onDataUpdate) { _ in refreshTrigger.toggle() } // Force re-render when data changes.
+        .background(Color.clear.opacity(self.refreshTrigger ? 0 : 1)) // Make refreshTrigger a real dependency so SwiftUI re-renders
     }
 
     // MARK: - Sections

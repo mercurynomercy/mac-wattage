@@ -59,8 +59,11 @@ struct MacWattageApp: App {
             estimator: estimator,
             logService: svc,
             uiUpdate: { record in
+                #if DEBUG
+                NSLog("[UI callback] watts=\(record.watts) popoverSparklineCount=\(popoverVM.sparklineData.count)")
+                #endif
                 menuBarVM.update(with: record)
-                popoverVM.currentWatts = record.watts
+                popoverVM.updateCurrentWatts(record.watts)
                 popoverVM.updateSparkline(with: record)
             }
         )
@@ -68,6 +71,9 @@ struct MacWattageApp: App {
         timer.start()
 
         // Wire up popover ViewModel to service for refresh operations.
+        #if DEBUG
+        NSLog("[App] Wired up popover VM, service log dir: \(store.logDirectory.path)")
+        #endif
         popoverVM.setService(svc)
 
         return (timer, svc)

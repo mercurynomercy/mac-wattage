@@ -61,6 +61,8 @@ public final class CollectionTimer {
         // Timer fires on the main run loop; work is dispatched to collectQueue.
         timer = Timer.scheduledTimer(
             timeInterval: Double(interval), target: self, selector: #selector(collectTimerFired(_:)), userInfo: nil, repeats: true)
+
+        NSLog("[CollectionTimer] Timer started with interval=%ds, timer=%@", interval, String(describing: timer))
     }
 
     /// Stop collection and invalidate the timer. The instance can be restarted with `start()`.
@@ -77,6 +79,7 @@ public final class CollectionTimer {
     }
 
     private func doCollect() {
+        NSLog("[CollectionTimer] doCollect firing")
         collectQueue.async { [weak self] in
             guard let self else { return }
 
@@ -97,7 +100,7 @@ public final class CollectionTimer {
             Task {
                 do { try await self.logService.append(record) } catch {
                     #if DEBUG
-                    print("[CollectionTimer] Failed to append record: \(error.localizedDescription)")
+                    NSLog("[CollectionTimer] Failed to append record: \(error.localizedDescription)")
                     #endif
                 }
             }
