@@ -39,7 +39,7 @@ struct PowerPopoverView: View {
                     .font(.system(size: 32, weight: .bold, design: .monospaced))
                     .foregroundColor(.black)
 
-                Text("Avg: \(viewModel.sessionAverage, specifier: "%.0f")W · Peak: \(viewModel.sessionPeak, specifier: "%.0f")W")
+                Text("Avg: \(viewModel.sessionAverage, specifier: "%.1f")W · Peak: \(viewModel.sessionPeak, specifier: "%.1f")W")
                     .foregroundColor(.black)
                     .font(.caption)
             } else {
