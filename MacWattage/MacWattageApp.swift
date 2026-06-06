@@ -89,7 +89,7 @@ struct MacWattageApp: App {
         #endif
         popoverVM.setService(svc)
 
-        return (timer, svc)
+        return (timer, flushTimer, svc)
     }
 
     var body: some Scene {
