@@ -40,6 +40,9 @@ public protocol PowerLogServiceProtocol {
 
     /// Write merged monthly totals to disk.
     func writeMonthlyTotals(_ totals: [MonthlyTotal]) async throws
+
+    /// Flush the 120-second rolling buffer to daily-log as one aggregated record.
+    func flushSecondsBuffer() async throws
 }
 
 /// Key names for UserDefaults-backed store settings.
@@ -63,6 +66,13 @@ public final class PowerLogService: PowerLogServiceProtocol {
 
     /// In-memory daily buffer — only written on `writeQueue`.
     private var dailyBuffer: [PowerRecord] = []
+
+    /// In-memory rolling buffer of the last 120 records (≈2 minutes at 1s interval).
+    /// Used for real-time avg/peak metrics. New records appended; oldest removed when over 120.
+    private var secondsBuffer: [PowerRecord] = []
+
+    /// Maximum number of records kept in the seconds buffer.
+    private let maxSecondsBuffer = 120
 
     /// In-memory monthly buffer — set once at init, read-only thereafter.
     private var monthlyBuffer: [MonthlyTotal] = []
@@ -96,6 +106,14 @@ public final class PowerLogService: PowerLogServiceProtocol {
     // MARK: - Core Operations
 
     public func append(_ record: PowerRecord) async throws {
+        // Add to seconds buffer (rolling window, max 120 records) — thread-safe.
+        await MainActor.run { [self] in
+            self.secondsBuffer.append(record)
+            if self.secondsBuffer.count > maxSecondsBuffer {
+                self.secondsBuffer.removeFirst(self.secondsBuffer.count - maxSecondsBuffer)
+            }
+        }
+
         try writeQueue.sync { [dailyBuffer] in
             var buffer = dailyBuffer  // Copy for mutation on the serial queue
             buffer.append(record)
@@ -121,19 +139,18 @@ public final class PowerLogService: PowerLogServiceProtocol {
         Array(dailyBuffer.suffix(count))
     }
 
-    // MARK: - Session Statistics (1-hour rolling window)
+    // MARK: - Session Statistics (120-second rolling window from seconds buffer)
 
     public func sessionAverage() -> Double {
-        let oneHourAgo = Calendar.current.date(byAdding: .hour, value: -1, to: Date()) ?? Date.distantPast
-        let records = dailyBuffer.filter { $0.timestamp >= oneHourAgo }
+        let records = secondsBuffer  // Last ~120 one-second samples (~2 minutes)
+        guard !records.isEmpty else { return 0.0 }
         guard !records.isEmpty else { return 0.0 }
         let sum = records.reduce(0.0) { $0 + $1.watts }
         return sum / Double(records.count)
     }
 
     public func sessionPeak() -> Double {
-        let oneHourAgo = Calendar.current.date(byAdding: .hour, value: -1, to: Date()) ?? Date.distantPast
-        let records = dailyBuffer.filter { $0.timestamp >= oneHourAgo }
+        let records = secondsBuffer  // Last ~120 one-second samples (~2 minutes)
         return records.map(\.watts).max() ?? 0.0
     }
 
@@ -184,16 +201,9 @@ public final class PowerLogService: PowerLogServiceProtocol {
             let records = dailyBuffer.filter { $0.timestamp >= monthStart && $0.timestamp < monthEnd }
             guard !records.isEmpty else { continue }
 
-            // kWh = (avgWatts × secondsPerSample × sampleCount) / (1000 × 3600)
-            // Only counts actual collection intervals, not the entire month duration.
-            let avgWatts = records.reduce(0.0) { $0 + $1.watts } / Double(records.count)
-            let sampleSeconds = records.enumerated().reduce(0.0) { sum, pair in
-                let (i, record) = pair
-                if i == 0 { return 60.0 } // First sample: assume a full interval
-                let delta = record.timestamp.timeIntervalSince(records[i - 1].timestamp)
-                return sum + (delta > 0 ? delta : 60.0) // Fallback to interval if gap is invalid
-            }
-            let totalKWh = (avgWatts * sampleSeconds) / (1000.0 * 3600.0)
+            // Flush model: each record represents 1 minute (60s) of average watts.
+            // kWh = sum(watts × 60s) / (1000 × 3600) = sum(watts) / 60000
+            let totalKWh = records.reduce(0.0) { $0 + $1.watts } / 60_000.0
 
             let yearMonth = String(format: "%04d-%02d",
                 calendar.component(.year, from: monthStart),
@@ -217,6 +227,7 @@ public final class PowerLogService: PowerLogServiceProtocol {
             try? fileManager.removeItem(at: monthlyLogURL)
 
             self.dailyBuffer.removeAll()  // Direct assignment from within sync block on the queue itself
+            secondsBuffer.removeAll()     // Also clear rolling buffer
         }
     }
 
@@ -311,4 +322,28 @@ public final class PowerLogService: PowerLogServiceProtocol {
             self.monthlyBuffer = totals
         }
     }
+
+    // MARK: - Seconds Buffer Flush
+
+    public func flushSecondsBuffer() async throws {
+        let records = await MainActor.run { [secondsBuffer] in Array(secondsBuffer) }
+        guard !records.isEmpty else { return }
+
+        // Compute average wattage from all records in the buffer.
+        let avgWatts = records.reduce(0.0) { $0 + $1.watts } / Double(records.count)
+        let flushRecord = PowerRecord(watts: avgWatts, isCharging: records.last?.isCharging)
+
+        // Append to daily buffer (one record per flush cycle ≈ 1 minute).
+        try await append(flushRecord)
+
+        // Clear flushed records from the rolling buffer.
+        await MainActor.run { [self] in
+            self.secondsBuffer.removeAll()
+        }
+
+        #if DEBUG
+        NSLog("[PowerLogService] flushSecondsBuffer: wrote avg=%.1fW for %d records", avgWatts, records.count)
+        #endif
+    }
+
 }

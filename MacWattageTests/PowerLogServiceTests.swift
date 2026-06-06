@@ -151,4 +151,43 @@ final class PowerLogServiceTests: XCTestCase {
         XCTAssertEqual(recent[4].watts, 14.0) // Last record
     }
 
+    // MARK: - Seconds buffer flush
+
+    func testFlushSecondsBufferWritesToDailyLog() async {
+        // Append 60 records with known wattage → flush should produce one record averaging them.
+        let targetWatts: Double = 42.0
+        for _ in 0..<60 {
+            let record = PowerRecord(watts: targetWatts, isCharging: nil)
+            try! await service.append(record)
+        }
+
+        // Before flush, daily log has the raw records (append writes immediately).
+        XCTAssertEqual(
+            service.recentRecords(count: 100).count, 60,
+            "Daily log should have the raw records before flush"
+        )
+
+        // Flush the seconds buffer.
+        try! await service.flushSecondsBuffer()
+
+        let afterFlush = service.recentRecords(count: 100)
+        XCTAssertEqual(afterFlush.count, 61, "Daily log should have raw + one flushed record")
+        XCTAssertEqual(
+            afterFlush[0].watts, targetWatts, accuracy: 0.1,
+            "Flushed record should have average wattage"
+        )
+
+        // Seconds buffer should be cleared.
+        XCTAssertEqual(service.sessionAverage(), 0.0, "Session average should reset after flush")
+    }
+
+    func testFlushEmptyBufferDoesNothing() async {
+        let beforeCount = service.recentRecords(count: 100).count
+
+        try! await service.flushSecondsBuffer()
+
+        let afterCount = service.recentRecords(count: 100).count
+        XCTAssertEqual(beforeCount, afterCount, "Flushing empty buffer should not write anything")
+    }
+
 }

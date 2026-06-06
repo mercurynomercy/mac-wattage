@@ -6,6 +6,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The collection timer — stopped on app termination.
     public var collectionTimer: CollectionTimer?
 
+    /// The flush timer — stopped on app termination.
+    public var flushTimer: Timer?
+
     /// The power log service — used for clear-all operations.
     public var powerLogService: PowerLogServiceProtocol?
 
@@ -27,9 +30,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
 
-    /// Stop the collection timer when app is about to terminate.
+    /// Stop the timers when app is about to terminate.
     public func applicationWillTerminate(_ notification: Notification) {
         collectionTimer?.stop()
+        flushTimer?.invalidate()
     }
 
     /// Keep running after last window closes — this is a menu bar extra, not a windowed app.

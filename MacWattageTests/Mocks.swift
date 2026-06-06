@@ -90,6 +90,8 @@ final class MockPowerLogService: NSObject, PowerLogServiceProtocol {
         appendedRecords.removeAll()
     }
 
+    func flushSecondsBuffer() async throws {}
+
     func oldRecords(before date: Date) -> [PowerRecord] { [] }
     func removeOldRecords(before date: Date) async throws {}
     func readMonthlyTotals() -> [MonthlyTotal] { [] }

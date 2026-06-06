@@ -3,9 +3,10 @@ import XCTest
 
 final class StoreTests: XCTestCase {
 
-    func testCollectionIntervalDefaultsToTen() {
-        let store = Store(defaults: MockUserDefaults())
-        XCTAssertEqual(store.collectionInterval, 10, "Default collection interval should be 10 seconds")
+    func testCollectionIntervalDefaultsToOne() {
+        // Use standard defaults directly so no stale persisted values interfere.
+        let store = Store(defaults: nil)
+        XCTAssertEqual(store.collectionInterval, 1, "Default collection interval should be 1 second")
     }
 
     func testSettingIntervalPersistsAndReadsBack() {

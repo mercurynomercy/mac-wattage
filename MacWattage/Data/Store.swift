@@ -16,9 +16,9 @@ public final class Store: ObservableObject {
     /// Direct reference to standard defaults, captured once before any property access.
     private let std: UserDefaults
 
-    /// Collection interval in seconds (default 10).
+    /// Collection interval in seconds (default 1).
     public var collectionInterval: Int {
-        get { readInt(forKey: StoreKey.collectionInterval, defaultValue: 10) }
+        get { readInt(forKey: StoreKey.collectionInterval, defaultValue: 1) }
         set { write(newValue, forKey: StoreKey.collectionInterval) }
     }
 

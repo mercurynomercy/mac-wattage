@@ -7,16 +7,22 @@ struct MacWattageApp: App {
     /// The collection timer — started in init, stopped by AppDelegate on termination.
     private var collectionTimer: CollectionTimer?
 
+    /// The flush timer — fires every 60s to aggregate secondsBuffer into daily-log.
+    private var flushTimer: Timer?
+
     /// The power log service — shared across the app.
     private var logService: PowerLogServiceProtocol?
 
     init() {
         let result = setupApp()
         self.collectionTimer = result.timer
+        self.flushTimer = result.flushTimer
         self.logService = result.service
 
         // Store references for AppDelegate lifecycle management (termination, notifications).
         appDelegate.collectionTimer = result.timer
+        appDelegate.flushTimer = result.flushTimer
+
         appDelegate.powerLogService = result.service
 
         // Seed initial session stats on the popover view model.
@@ -27,7 +33,7 @@ struct MacWattageApp: App {
         MenuBarViewModel.shared.currentWatts = result.service.currentWatts()
     }
 
-    private func setupApp() -> (timer: CollectionTimer, service: PowerLogServiceProtocol) {
+    private func setupApp() -> (timer: CollectionTimer, flushTimer: Timer?, service: PowerLogServiceProtocol) {
         // 1. Detect hardware platform and chip generation (one-time, side-effect for UI decisions elsewhere).
         _ = PlatformDetector.detectPlatform()
         let chipGeneration = PlatformDetector.detectChipGeneration()
@@ -69,6 +75,13 @@ struct MacWattageApp: App {
         )
 
         timer.start()
+
+        // 8. Create flush timer — fires every 60s to aggregate secondsBuffer into daily-log.
+        let flushTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [unowned svc] _ in
+            Task.detached(priority: .utility) {
+                do { try await svc.flushSecondsBuffer() } catch {}
+            }
+        }
 
         // Wire up popover ViewModel to service for refresh operations.
         #if DEBUG
