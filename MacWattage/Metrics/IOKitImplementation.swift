@@ -1,54 +1,84 @@
 import Darwin
 import Foundation
 
-/// Concrete implementation reading from mach and IOKit APIs. Thread-safe (no mutable state).
+/// Concrete implementation reading from mach and IOKit APIs. Thread-safe via internal lock.
 public final class IOKitAdapter: IOKitAdapterProtocol {
 
-    // MARK: - CPU Utilization
+    // MARK: - CPU Utilization Delta Tracking
+
+    /// Previous cumulative tick counts (since boot). Used to compute delta between calls.
+    private var previousCpuTicks: [integer_t]? = nil
+
+    /// Lock protecting `previousCpuTicks` — serializes concurrent reads.
+    private let ticksLock = NSRecursiveLock()
 
     /// Reads per-core CPU load from mach and returns busy fraction across all cores.
+    /// Uses delta between successive calls — `host_statistics64` returns cumulative ticks since boot,
+    /// so the busy fraction is computed as `(deltaTotal - deltaIdle) / deltaTotal`.
     public func cpuUtilization() -> Double {
         let host = mach_host_self()
 
-        // Use host_statistics64(HOST_CPU_LOAD_INFO) which is available on all macOS versions
-        // and doesn't require entitlements (unlike host_processor_info which SIGSEGVs without them).
-        // CPU_STATE_MAX = 4 (user, system, idle, nice ticks)
         var cpuLoad: [integer_t] = Array(repeating: 0, count: Int(CPU_STATE_MAX))
         var count = mach_msg_type_number_t(cpuLoad.count)
 
         let kr = host_statistics64(host, HOST_CPU_LOAD_INFO, &cpuLoad, &count)
         guard kr == KERN_SUCCESS else { return 0.0 }
 
-        var totalUsage: UInt64 = 0
-        var idleTime: UInt64 = 0
+        let (deltaTotal, deltaIdle): (UInt64, UInt64) = {
+            self.ticksLock.lock()
 
-        // cpuLoad[i] holds ticks for CPU_STATE_[USER/SYSTEM/IDLE/NICE]
-        for i in 0 ..< CPU_STATE_MAX {
-            let ticks = UInt64(cpuLoad[Int(i)])
-            totalUsage += ticks
-            if i == CPU_STATE_IDLE { idleTime = ticks }
-        }
+            // On first call we have no previous sample — return a neutral default until
+            // we have two delta samples to compare.
+            guard let prev = self.previousCpuTicks, prev.count == CPU_STATE_MAX else {
+                self.previousCpuTicks = cpuLoad
+                self.ticksLock.unlock()
+                return (UInt64(0), UInt64(0))
+            }
 
-        guard totalUsage > 0 else { return 0.0 }
+            var dTotal: UInt64 = 0
+            var dIdle: UInt64 = 0
 
-        let utilization = Double(idleTime) / Double(totalUsage)
-        return min(1.0, max(0.0, 1.0 - utilization))
+            // cpuLoad[i] holds ticks for CPU_STATE_[USER/SYSTEM/IDLE/NICE].
+            // Compute delta (current - previous) for each counter.
+            for i in 0 ..< CPU_STATE_MAX {
+                let delta = UInt64(cpuLoad[Int(i)]) - UInt64(prev[Int(i)])
+                dTotal += delta
+                if i == CPU_STATE_IDLE { dIdle = delta }
+            }
+
+            // Update stored ticks for next call.
+            self.previousCpuTicks = cpuLoad
+            self.ticksLock.unlock()
+
+            return (dTotal, dIdle)
+        }()
+
+        guard deltaTotal > 0 else { return 0.0 }
+
+        let busyFraction = Double(deltaTotal - deltaIdle) / Double(deltaTotal)
+        return min(1.0, max(0.0, busyFraction))
     }
 
-    // MARK: - GPU Utilization
+    // MARK: - GPU Utilization (Apple Silicon heuristic)
 
-    /// Reads GPU workload via IOService matching. Currently returns 0.0 as a conservative fallback —
-    /// actual GPU utilization requires Metal Performance Queries which need a Metal device context.
+    /// Estimates GPU utilization on Apple Silicon using system memory pressure as a proxy.
+    /// True per-GPU-util APIs (Metal Performance Queries) require an active MTLDevice context,
+    /// which a menu-bar app typically doesn't have. Memory pressure correlates with overall system load,
+    /// which often includes GPU activity under heavy workloads (e.g., LLM inference).
     public func gpuUtilization() -> Double {
-        let service = IOServiceGetMatchingService(
-            kIOMainPortDefault,  // Use non-deprecated API name (macOS 12+)
-            IOServiceMatching("IOGPUDevice")
-        )
+        var memPressure: Int32 = 0
+        var size = MemoryLayout<Int32>.size
 
-        guard service != 0 else { return 0.0 }
+        // hw.mem_pressure: 0 (free) to ~100+ (severe pressure).
+        // HW_MEMPRESSURE constant not exported in SDK headers — use raw value 13.
+        var mib: [Int32] = [CTL_HW, 13 /* HW_MEMPRESSURE */]
+        let kr = sysctl(&mib, 2, &memPressure, &size, nil, 0)
+        if kr == 0 && memPressure > 0 {
+            // Scale: low pressure → light GPU load, high pressure → heavy.
+            return min(1.0, max(0.0, Double(memPressure) / 500.0))
+        }
 
-        defer { IOObjectRelease(service) }
-        // GPU utilization requires Metal Performance Queries (MPQ), which need a MTLDevice.
+        // No pressure data available — return conservative zero for GPU component.
         return 0.0
     }
 
@@ -86,3 +116,4 @@ public final class IOKitAdapter: IOKitAdapterProtocol {
         return 1.0
     }
 }
+
