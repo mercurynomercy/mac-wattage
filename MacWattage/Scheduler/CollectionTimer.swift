@@ -93,8 +93,14 @@ public final class CollectionTimer {
             // Build the record — id and timestamp are auto-generated defaults.
             let record = PowerRecord(watts: watts, isCharging: isCharging)
 
-            // Fire-and-forget write to persistent storage (ignore errors).
-            Task { try? await self.logService.append(record) }
+            // Fire-and-forget write to persistent storage. Log failures for debugging.
+            Task {
+                do { try await self.logService.append(record) } catch {
+                    #if DEBUG
+                    print("[CollectionTimer] Failed to append record: \(error.localizedDescription)")
+                    #endif
+                }
+            }
 
             // Push to UI on the main thread.
             DispatchQueue.main.async { [uiUpdate] in

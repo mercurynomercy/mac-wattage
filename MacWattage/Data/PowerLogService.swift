@@ -79,8 +79,14 @@ public final class PowerLogService: PowerLogServiceProtocol {
         self.monthlyLogURL = directory.appendingPathComponent("monthly-log.plist")
         self.writeQueue = DispatchQueue(label: "com.macwattage.data.write", qos: .utility)
 
-        // Ensure directory exists
-        try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        // Ensure directory exists; log a warning if it fails so disk persistence issues are visible.
+        do {
+            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        } catch {
+            #if DEBUG
+            print("[PowerLogService] Failed to create log directory '\(directory.path)': \(error.localizedDescription)")
+            #endif
+        }
 
         // Load existing data into memory buffers
         loadDailyBuffer()
@@ -90,7 +96,7 @@ public final class PowerLogService: PowerLogServiceProtocol {
     // MARK: - Core Operations
 
     public func append(_ record: PowerRecord) async throws {
-        try await writeQueue.sync { [dailyBuffer] in
+        try writeQueue.sync { [dailyBuffer] in
             var buffer = dailyBuffer  // Copy for mutation on the serial queue
             buffer.append(record)
 
@@ -178,10 +184,16 @@ public final class PowerLogService: PowerLogServiceProtocol {
             let records = dailyBuffer.filter { $0.timestamp >= monthStart && $0.timestamp < monthEnd }
             guard !records.isEmpty else { continue }
 
-            // kWh = (avgWatts × secondsInPeriod) / (1000 × 3600)
+            // kWh = (avgWatts × secondsPerSample × sampleCount) / (1000 × 3600)
+            // Only counts actual collection intervals, not the entire month duration.
             let avgWatts = records.reduce(0.0) { $0 + $1.watts } / Double(records.count)
-            let secondsInPeriod = monthEnd.timeIntervalSince(monthStart)
-            let totalKWh = (avgWatts * abs(secondsInPeriod)) / (1000.0 * 3600.0)
+            let sampleSeconds = records.enumerated().reduce(0.0) { sum, pair in
+                let (i, record) = pair
+                if i == 0 { return 60.0 } // First sample: assume a full interval
+                let delta = record.timestamp.timeIntervalSince(records[i - 1].timestamp)
+                return sum + (delta > 0 ? delta : 60.0) // Fallback to interval if gap is invalid
+            }
+            let totalKWh = (avgWatts * sampleSeconds) / (1000.0 * 3600.0)
 
             let yearMonth = String(format: "%04d-%02d",
                 calendar.component(.year, from: monthStart),
@@ -195,8 +207,9 @@ public final class PowerLogService: PowerLogServiceProtocol {
 
     // MARK: - Management
 
+    // Note: kept `async throws` for protocol conformance even though sync implementation.
     public func clearAll() async throws {
-        try await writeQueue.sync { [dailyBuffer] in
+        writeQueue.sync { [dailyBuffer] in
             // Remove all records from the buffer copy first, then clear disk files
             _ = dailyBuffer  // Discard old capture — we mutate self.dailyBuffer directly
 
@@ -252,7 +265,7 @@ public final class PowerLogService: PowerLogServiceProtocol {
     }
 
     public func removeOldRecords(before date: Date) async throws {
-        try await writeQueue.sync { [dailyBuffer] in
+        try writeQueue.sync { [dailyBuffer] in
             var buffer = dailyBuffer
             let calendar = Calendar.current
             let startOfMonth = calendar.startOfDay(for: date)
@@ -276,7 +289,7 @@ public final class PowerLogService: PowerLogServiceProtocol {
     }
 
     public func writeMonthlyTotals(_ totals: [MonthlyTotal]) async throws {
-        try await writeQueue.sync {
+        try writeQueue.sync {
             let data = try encoder.encode(totals)
             let tempURL = monthlyLogURL.deletingPathExtension().appendingPathExtension("tmp")
             try data.write(to: tempURL, options: [.atomic])
