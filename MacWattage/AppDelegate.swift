@@ -40,14 +40,15 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Notification handlers (called via @objc selectors)
 
     @objc private func handleClearAllLogs() {
-        // Clear data in background, then reset UI on main thread.
-        Task.detached(priority: .userInitiated) { [weak self] in
-            guard let service = self?.powerLogService else { return }
+        // Capture service before detached task (must be Sendable).
+        guard let service = self.powerLogService else { return }
 
+        // Clear data in background, then reset UI on main thread.
+        Task.detached(priority: .userInitiated) { [unowned self] in
             do { try await service.clearAll() } catch {}
 
             // Reset UI components on main thread.
-            await MainActor.run { self?.resetUI() }
+            await MainActor.run { self.resetUI() }
         }
     }
 

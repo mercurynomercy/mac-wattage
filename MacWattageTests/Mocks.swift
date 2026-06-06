@@ -7,6 +7,8 @@ import XCTest
 final class MockUserDefaults: NSObject, UserDefaultsProtocol {
 
     var values: [String: Any] = [:]
+    /// Tracks writes made via setAny for test assertions.
+    var writtenValues: [(value: Any?, key: String)] = []
 
     func integer(forKey key: String, defaultValue: Int) -> Int {
         values[key] as? Int ?? defaultValue
@@ -21,6 +23,7 @@ final class MockUserDefaults: NSObject, UserDefaultsProtocol {
     }
 
     func setAny(_ value: Any?, forKey key: String) {
+        writtenValues.append((value, key))
         values[key] = value ?? NSNull()
     }
 
@@ -41,6 +44,7 @@ final class MockUserDefaults: NSObject, UserDefaultsProtocol {
 
     func reset() {
         values.removeAll()
+        writtenValues.removeAll()
     }
 }
 

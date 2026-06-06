@@ -13,5 +13,11 @@ build/
 # Xcode shared schemes (generated, not needed in repo)
 MacWattage.xcodeproj/xcuserdata/
 
+# Build output from scripts/
+dist/
+
+# Claude Code local settings (auth tokens, personal prefs)
+.claude/settings.local.json
+
 # macOS
 .DS_Store

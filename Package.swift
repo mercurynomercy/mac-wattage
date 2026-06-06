@@ -40,7 +40,7 @@ let package = Package(
                 "PowerLogServiceTests.swift",
                 "RotationManagerTests.swift",
                 "StoreTests.swift",
-            ]
+            ],
         ),
     ]
 )

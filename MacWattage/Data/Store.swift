@@ -1,74 +1,31 @@
 import Foundation
 
-/// Lightweight UserDefaults protocol for dependency injection. Extends the real UserDefaults to conform.
+/// Lightweight UserDefaults protocol for dependency injection in tests.
 public protocol UserDefaultsProtocol: AnyObject {
     func integer(forKey key: String, defaultValue: Int) -> Int
     var boolForKey: (String) -> Bool { get }
     func string(forKey key: String) -> String?
-    func setAny(_ value: Any?, forKey key: String)  // Avoids collision with Foundation's native set methods
+    func setAny(_ value: Any?, forKey key: String)
     func object(forKey key: String) -> Any?
-}
-
-/// Extension makes real UserDefaults conform to our protocol.
-extension UserDefaults: UserDefaultsProtocol {
-
-    /// Convenience wrapper with default value for integer retrieval.
-    public func integer(forKey key: String, defaultValue: Int) -> Int {
-        if UserDefaults.standard.object(forKey: key) == nil { return defaultValue }
-        return UserDefaults.standard.integer(forKey: key)
-    }
-
-    /// Convenience wrapper for bool retrieval.
-    public var boolForKey: (String) -> Bool {
-        return { key in UserDefaults.standard.bool(forKey: key) }
-    }
-
-    /// Set any Codable-compatible value. Routes to the appropriate native UserDefaults method for each type.
-    public func setAny(_ value: Any?, forKey key: String) {
-        switch value {
-        case let v as Bool?:            UserDefaults.standard.set(v, forKey: key)  // Optional — routes to native Bool? setter
-        case let v as Int?:             UserDefaults.standard.set(v, forKey: key)  // Optional — routes to native Int? setter
-        case let v as Double?:          UserDefaults.standard.set(v, forKey: key)  // Optional — routes to native Double? setter
-        case let v as String?:          UserDefaults.standard.set(v, forKey: key)  // Optional — routes to native String? setter
-        case let v as URL?:             UserDefaults.standard.set(v?.absoluteString, forKey: key)  // Optional — routes to native String? setter
-        case let v as Data?:            UserDefaults.standard.set(v, forKey: key)  // Optional — routes to native Data? setter
-        default:                        UserDefaults.standard.set(value, forKey: key)  // NSKeyedArchiver-compatible types
-        }
-    }
-
-    /// Convenience wrapper for generic object retrieval.
-    public func object(forKey key: String) -> Any? {
-        UserDefaults.standard.object(forKey: key)  // Direct call to avoid protocol witness table recursion.
-    }
-
-    /// Convenience wrapper for retrieving URL values from stored strings.
-    public func url(forKey key: String) -> URL? {
-        guard let str = UserDefaults.standard.string(forKey: key) else { return nil }
-        return URL(string: str)
-    }
-
-    /// Remove a key from UserDefaults.
-    public func removeObject(forKey key: String) {
-        UserDefaults.standard.removeObject(forKey: key)  // Direct call to avoid protocol witness table recursion.
-    }
-
 }
 
 /// Application store backed by UserDefaults. Manages collection interval, log directory path, and login items toggle.
 public final class Store: ObservableObject {
 
-    private let defaults: UserDefaultsProtocol
+    private let defaults: UserDefaultsProtocol?
+    /// Direct reference to standard defaults, captured once before any property access.
+    private let std: UserDefaults
 
     /// Collection interval in seconds (default 10).
     public var collectionInterval: Int {
-        get { defaults.integer(forKey: StoreKey.collectionInterval, defaultValue: 10) }
-        set { defaults.setAny(newValue, forKey: StoreKey.collectionInterval) }
+        get { readInt(forKey: StoreKey.collectionInterval, defaultValue: 10) }
+        set { write(newValue, forKey: StoreKey.collectionInterval) }
     }
 
     /// Log storage directory path (default ~/Library/Application Support/Mac Wattage).
     public var logDirectoryPath: String? {
-        get { defaults.string(forKey: StoreKey.logDirectoryPath) }
-        set { defaults.setAny(newValue, forKey: StoreKey.logDirectoryPath) }
+        get { readString(forKey: StoreKey.logDirectoryPath) }
+        set { write(newValue, forKey: StoreKey.logDirectoryPath) }
     }
 
     /// Computed log directory URL. Returns the user-configured path or the default Application Support location.
@@ -80,16 +37,67 @@ public final class Store: ObservableObject {
 
     /// Auto-launch at login toggle (default false). On set, updates the system login item list.
     public var autoLaunchAtLogin: Bool {
-        get { defaults.boolForKey(StoreKey.autoLaunchAtLogin) }
-        set {
-            defaults.setAny(newValue, forKey: StoreKey.autoLaunchAtLogin)
-            updateLoginItems(newValue)
-        }
+        get { readBool(forKey: StoreKey.autoLaunchAtLogin) }
+        set { write(newValue, forKey: StoreKey.autoLaunchAtLogin); updateLoginItems(newValue) }
     }
 
-    /// Creates a store backed by the given UserDefaults. Pass nil to use standard defaults.
+    /// Creates a store backed by the given UserDefaults. Pass nil to use standard defaults directly.
     public init(defaults: UserDefaultsProtocol? = nil) {
-        self.defaults = defaults ?? (UserDefaults.standard as UserDefaultsProtocol)
+        self.defaults = defaults
+        // Capture standard once, before any property access triggers recursive loops.
+        self.std = UserDefaults.standard
+    }
+
+    // MARK: - Internal access helpers
+
+    private func readInt(forKey key: String, defaultValue: Int) -> Int {
+        if let d = defaults { return readInt(from: d, key: key, defaultValue: defaultValue) }
+        // Direct calls on captured std — no protocol dispatch.
+        if let obj = std.object(forKey: key), let v = obj as? Int { return v }
+        return defaultValue
+    }
+
+    private func readInt(from d: UserDefaultsProtocol, key: String, defaultValue: Int) -> Int {
+        if let obj = d.object(forKey: key), let v = obj as? Int { return v }
+        // Fallback to captured std for default value.
+        if let obj = std.object(forKey: key), let v = obj as? Int { return v }
+        return defaultValue
+    }
+
+    private func readString(forKey key: String) -> String? {
+        if let d = defaults { return d.string(forKey: key) }
+        return std.string(forKey: key)
+    }
+
+    private func readBool(forKey key: String) -> Bool {
+        if let d = defaults { return d.boolForKey(key) }
+        return std.bool(forKey: key)
+    }
+
+    private func write(_ value: Any?, forKey key: String) {
+        if let d = defaults {
+            // Use native Foundation setters — no extension dispatch.
+            switch value {
+            case let v as Bool:             d.setAny(v, forKey: key)
+            case let v as Int:              d.setAny(v, forKey: key)
+            case let v as Double:           d.setAny(v, forKey: key)
+            case let v as String?:         d.setAny(v, forKey: key)
+            case let v as URL:             d.setAny(v.absoluteString, forKey: key)
+            case let v as Data?:           d.setAny(v, forKey: key)
+            default:                       d.setAny(value, forKey: key)
+            }
+        } else {
+            // Direct calls on captured std — no extension dispatch.
+            switch value {
+            case let v as Bool:             std.set(v, forKey: key)
+            case let v as Int:              std.set(v, forKey: key)
+            case let v as Double:           std.set(v, forKey: key)
+            case let v as String?:         std.set(v, forKey: key)
+            case let v as URL:             std.set(v.absoluteString, forKey: key)
+            case let v as Data?:           std.set(v, forKey: key)
+            default:                       std.set(value, forKey: key)
+            }
+        }
     }
 
     // MARK: - Login Items
@@ -114,8 +122,8 @@ public final class Store: ObservableObject {
 
     /// Clear all stored data (collection interval, log directory, login items).
     public func reset() {
-        defaults.setAny(nil, forKey: StoreKey.collectionInterval)
-        defaults.setAny(nil, forKey: StoreKey.logDirectoryPath)
+        std.removeObject(forKey: StoreKey.collectionInterval)
+        std.removeObject(forKey: StoreKey.logDirectoryPath)
         autoLaunchAtLogin = false
     }
 
