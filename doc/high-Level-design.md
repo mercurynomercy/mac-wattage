@@ -228,10 +228,10 @@ final class PowerLogService {
     
     // MARK: - Session Statistics
     
-    /// Compute average watts over the last 1 hour since login
+    /// Compute average watts over the last 120 seconds (rolling window)
     func sessionAverage() -> Double
-    
-    /// Compute peak (max) watts recorded since login
+
+    /// Compute peak (max) watts over the last 120 seconds
     func sessionPeak() -> Double
     
     /// Current watts from the latest record
@@ -270,12 +270,12 @@ struct MonthlyTotal: Codable {
 **Storage Schema**: Two separate plist files
 ```
 ~/Library/Application Support/Mac Wattage/
-├── daily-log.plist          // [PowerRecord] — raw 10s/1min records
+├── daily-log.plist          // [PowerRecord] — per-second samples (minute-aggregated)
 └── monthly-log.plist        // [MonthlyTotal] — aggregated monthly kWh
 ```
 
 **Why two files?**
-- Daily log can grow to ~25,920 records (30 days × 8640 records/day at 10s interval)
+- Daily log can grow to ~2,592,000 records (30 days × 86,400 per-day at 1s interval; minute-level flush keeps it to ~43,200 aggregated records)
 - Monthly log stays small (~36 records for 3 years)
 - Separate files enable independent rotation without touching monthly data
 
@@ -461,8 +461,9 @@ struct SettingsWindowView: View {
             // Collection interval
             Form {
                 Picker("Collection Interval", selection: $store.collectionInterval) {
+                    Text("Every 1 second (default)").tag(1)
+                    Text("Every 5 seconds").tag(5)
                     Text("Every 10 seconds").tag(10)
-                    Text("Every minute").tag(60)
                 }
             }
             
@@ -501,7 +502,7 @@ struct SettingsWindowView: View {
 @MainActor
 final class MenuBarViewModel: ObservableObject {
     @Published var currentWatts: Double = 0
-    @Published var sparklineData: [Double] = []  // Last ~36 points
+    @Published var sparklineData: [Double] = []  // Last ~120 records (~2-minute rolling window)
 }
 
 // Popover view model — computed on demand from data layer
@@ -635,7 +636,7 @@ Background Thread
 ### 6.1 Sparkline View (Menu Bar)
 ```swift
 struct SparklineView: View {
-    let values: [Double]  // ~36 points
+    let values: [Double]  // ~120 records (~2 minutes at 1s interval)
     
     var body: some View {
         Path { path in
@@ -685,7 +686,7 @@ struct BarChartView: View {
 ### 6.3 Monthly Totals View
 ```swift
 struct MonthlyTotalsView: View {
-    let totals: [MonthlyTotal]  // Up to 12 points
+    let totals: [MonthlyTotal]  // Up to 6 months (past 6)
     
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -753,7 +754,7 @@ MacWattage/
 | Storage layout | Two files (daily + monthly) | Independent rotation; daily log is large, monthly is small |
 | Chart rendering | Custom SwiftUI paths | Zero dependencies; charts are simple enough to build |
 | Settings UI | Dedicated NSWindow | Full-featured panel with file picker, toggles, destructive actions |
-| Session stats | 1-hour rolling window since login | Captures meaningful recent behavior without being stale |
+| Session stats | 120-second rolling window (last 120 records) | Reflects recent load without being stale; matches Sparkline chart window |
 | Power estimation | Hardware sensors primary, TDP fallback | Accurate when available, functional on all Apple Silicon |
 | Data rotation | Automatic on month boundary | Keeps daily log manageable; preserves monthly history |
 | Threading | Background collection, main-thread UI | Prevents UI freeze; @MainActor ensures thread safety |

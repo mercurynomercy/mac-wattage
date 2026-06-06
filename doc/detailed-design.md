@@ -878,7 +878,7 @@ final class Store {
     
     // MARK: - Defaults
     
-    var defaultCollectionInterval: Int { 10 }  // 10 seconds
+    var defaultCollectionInterval: Int { 1 }  // 1 second (default)
     var defaultLogDirectory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
             .first!
@@ -1170,8 +1170,9 @@ struct SettingsWindowView: View {
             // Collection interval
             Form {
                 Picker("Collection Interval", selection: $store.collectionInterval) {
+                    Text("Every 1 second (default)").tag(1)
+                    Text("Every 5 seconds").tag(5)
                     Text("Every 10 seconds").tag(10)
-                    Text("Every minute").tag(60)
                 }
                 .pickerStyle(.radioGroup)
             }
@@ -1254,14 +1255,14 @@ final class MenuBarViewModel: ObservableObject {
     static let shared = MenuBarViewModel()
     
     @Published var currentWatts: Double = 0
-    @Published var sparklineData: [Double] = []  // Last ~36 points
+    @Published var sparklineData: [Double] = []  // Last ~120 records (~2-minute rolling window)
     
     private init() {}
     
     func update(with record: PowerRecord) {
         currentWatts = record.watts
         
-        // Add to sparkline buffer (ring buffer, max 36 points)
+        // Add to sparkline buffer (rolling window, max 120 records = ~2 minutes at 1s interval)
         sparklineData.append(record.watts)
         if sparklineData.count > 36 {
             sparklineData.removeFirst()
@@ -1826,17 +1827,17 @@ protocol UserDefaultsProtocol {
 ## 10. Constants & Configuration
 
 ### 10.1 Sparkline Buffer Size
-- Menu bar sparkline: **36 points** (last 6 minutes at 10s interval, or last 6 minutes at 1min interval)
+- Menu bar sparkline: **120 points** (last 120 seconds at 1s interval, rolling window)
 
 ### 10.2 Session Window
-- Session average/peak: **1 hour** rolling window since system login
+- Session average/peak: **120 seconds** rolling window (last 120 records)
 
 ### 10.3 Chart Ranges
 - 7-day chart: **7 days** of daily averages
-- Monthly totals: **12 months** of monthly kWh
+- Monthly totals: **6 months** of monthly kWh (past 6)
 
 ### 10.4 Collection Intervals
-- Default: **10 seconds**
+- Default: **1 second**; user can increase in settings (5s, 10s options)
 - Alternative: **60 seconds** (1 minute)
 
 ### 10.5 File Naming
