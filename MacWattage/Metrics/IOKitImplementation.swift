@@ -1,5 +1,6 @@
 import Darwin
 import Foundation
+import IOKit
 
 /// Concrete implementation reading from mach and IOKit APIs. Thread-safe via internal lock.
 public final class IOKitAdapter: IOKitAdapterProtocol {
@@ -61,25 +62,31 @@ public final class IOKitAdapter: IOKitAdapterProtocol {
 
     // MARK: - GPU Utilization (Apple Silicon heuristic)
 
-    /// Estimates GPU utilization on Apple Silicon using system memory pressure as a proxy.
-    /// True per-GPU-util APIs (Metal Performance Queries) require an active MTLDevice context,
-    /// which a menu-bar app typically doesn't have. Memory pressure correlates with overall system load,
-    /// which often includes GPU activity under heavy workloads (e.g., LLM inference).
+    /// Reads real GPU utilization on Apple Silicon from the IOAccelerator service's
+    /// PerformanceStatistics → "Device Utilization %" key (the same source iStat/Activity Monitor use).
+    /// Returns a [0, 1] fraction, or 0.0 if no accelerator/statistics are available.
     public func gpuUtilization() -> Double {
-        var memPressure: Int32 = 0
-        var size = MemoryLayout<Int32>.size
+        var iterator: io_iterator_t = 0
+        guard IOServiceGetMatchingServices(
+            kIOMainPortDefault, IOServiceMatching("IOAccelerator"), &iterator
+        ) == KERN_SUCCESS else { return 0.0 }
+        defer { IOObjectRelease(iterator) }
 
-        // hw.mem_pressure: 0 (free) to ~100+ (severe pressure).
-        // HW_MEMPRESSURE constant not exported in SDK headers — use raw value 13.
-        var mib: [Int32] = [CTL_HW, 13 /* HW_MEMPRESSURE */]
-        let kr = sysctl(&mib, 2, &memPressure, &size, nil, 0)
-        if kr == 0 && memPressure > 0 {
-            // Scale: low pressure → light GPU load, high pressure → heavy.
-            return min(1.0, max(0.0, Double(memPressure) / 500.0))
+        var maxUtil = 0.0
+        var service = IOIteratorNext(iterator)
+        while service != 0 {
+            var props: Unmanaged<CFMutableDictionary>?
+            if IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0) == KERN_SUCCESS,
+               let dict = props?.takeRetainedValue() as? [String: Any],
+               let perf = dict["PerformanceStatistics"] as? [String: Any],
+               let util = perf["Device Utilization %"] as? Int {
+                maxUtil = max(maxUtil, Double(util) / 100.0)
+            }
+            IOObjectRelease(service)
+            service = IOIteratorNext(iterator)
         }
 
-        // No pressure data available — return conservative zero for GPU component.
-        return 0.0
+        return min(1.0, max(0.0, maxUtil))
     }
 
     // MARK: - Battery State

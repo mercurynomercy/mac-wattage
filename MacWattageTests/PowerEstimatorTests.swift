@@ -45,14 +45,14 @@ final class PowerEstimatorTests: XCTestCase {
     // MARK: - M2 Base (default) at various loads — studio platform, dual fan
 
     func testM2BaseAtIdle() {
-        // Formula: SoC_TDP(20) × loadFactor(0.25) + baseConsumption(12)
-        // = 20 × 0.25 + 12 = 17W (fans off at <0.3 effectiveLoad; screen-on idle maps to 0.25 light)
+        // Continuous: effectiveLoad = 0.20 + 0.80×0 = 0.20, fan = 6×0 = 0
+        // = 20 × 0.20 + 12 = 16W
         let hwProfile = HardwareProfile(
             platform: .studio, chipGeneration: .m2Base, ramSizeBytes: 8_589_934_592,
             fanModel: .dual, screenOff: false)
         let estimator = PowerEstimator(profile: hwProfile)
         let watts = estimator.estimateSystemPower(from: 0.0, gpuUtil: 0.0)
-        XCTAssertEqual(watts, 17.0, accuracy: 1.0, "M2 base at idle should be ~17W")
+        XCTAssertEqual(watts, 16.0, accuracy: 1.0, "M2 base at idle should be ~16W")
     }
 
     func testM2BaseAtFullLoad() {
@@ -67,66 +67,64 @@ final class PowerEstimatorTests: XCTestCase {
     }
 
     func testM2BaseAtHalfLoad() {
-        // Combined load = 0.6*0.5 + 0.4*0.5 = 0.5 → medium (0.55)
-        // SoC_TDP(20) × 0.55 + baseConsumption(12) + fanPower(dual=6W fixed)
-        // = 11 + 12 + 6 = 29W
+        // Combined = 0.5 → effectiveLoad = 0.20 + 0.80×0.5 = 0.60, fan = 6×0.5 = 3
+        // SoC_TDP(20) × 0.60 + 12 + 3 = 12 + 12 + 3 = 27W
         let hwProfile = HardwareProfile(
             platform: .studio, chipGeneration: .m2Base, ramSizeBytes: 8_589_934_592,
             fanModel: .dual, screenOff: false)
         let estimator = PowerEstimator(profile: hwProfile)
         let watts = estimator.estimateSystemPower(from: 0.5, gpuUtil: 0.5)
-        XCTAssertEqual(watts, 29.0, accuracy: 1.0, "M2 base at half load should be ~29W")
+        XCTAssertEqual(watts, 27.0, accuracy: 1.0, "M2 base at half load should be ~27W")
     }
 
     // MARK: - M1 Pro at various loads
 
     func testM1ProAtHalfLoad() {
-        // M1 Pro SoC_TDP = 30W, medium load (0.55)
-        // 30 × 0.55 + 12 + 6W (dual fan fixed) = 16.5 + 12 + 6 = 34.5W
+        // M1 Pro SoC_TDP = 30W, combined 0.5 → effectiveLoad 0.60, fan 6×0.5 = 3
+        // 30 × 0.60 + 12 + 3 = 18 + 12 + 3 = 33W
         let hwProfile = HardwareProfile(
             platform: .studio, chipGeneration: .m1Pro, ramSizeBytes: 8_589_934_592,
             fanModel: .dual, screenOff: false)
         let estimator = PowerEstimator(profile: hwProfile)
         let watts = estimator.estimateSystemPower(from: 0.5, gpuUtil: 0.5)
-        XCTAssertEqual(watts, 34.5, accuracy: 2.0, "M1 Pro at half load should be ~34.5W")
+        XCTAssertEqual(watts, 33.0, accuracy: 2.0, "M1 Pro at half load should be ~33W")
     }
 
     func testM2ProAtIdle() {
-        // M2 Pro groups with M1 Pro → SoC_TDP = 30W, light load (0.25)
-        // 30 × 0.25 + 12 = 19.5W (fans off at <0.3 effectiveLoad)
+        // M2 Pro groups with M1 Pro → SoC_TDP = 30W, effectiveLoad 0.20, fan 0
+        // 30 × 0.20 + 12 = 18W
         let hwProfile = HardwareProfile(
             platform: .studio, chipGeneration: .m2Pro, ramSizeBytes: 8_589_934_592,
             fanModel: .dual, screenOff: false)
         let estimator = PowerEstimator(profile: hwProfile)
         let watts = estimator.estimateSystemPower(from: 0.0, gpuUtil: 0.0)
-        XCTAssertEqual(watts, 19.5, accuracy: 2.0, "M2 Pro at idle should be ~19.5W")
+        XCTAssertEqual(watts, 18.0, accuracy: 2.0, "M2 Pro at idle should be ~18W")
     }
 
     // MARK: - Light load (screen on, low utilization)
 
     func testLightLoad() {
-        // Combined = 0.6*0.2 + 0.4*0.15 = 0.18 → light (0.25)
-        // SoC_TDP(20) × 0.25 + baseConsumption(12) = 5+12=17W (fans still off at <0.3 load)
+        // Combined = 0.18 → effectiveLoad 0.20+0.144 = 0.344, fan 6×0.18 ≈ 1.1
+        // SoC_TDP(20) × 0.344 + 12 + 1.1 ≈ 6.9 + 12 + 1.1 ≈ 20W
         let hwProfile = HardwareProfile(
             platform: .studio, chipGeneration: .m2Base, ramSizeBytes: 8_589_934_592,
             fanModel: .dual, screenOff: false)
         let estimator = PowerEstimator(profile: hwProfile)
         let watts = estimator.estimateSystemPower(from: 0.2, gpuUtil: 0.15)
-        XCTAssertEqual(watts, 17.0, accuracy: 2.0, "Light load should be ~17W")
+        XCTAssertEqual(watts, 20.0, accuracy: 2.0, "Light load should be ~20W")
     }
 
     // MARK: - Heavy load (high utilization)
 
     func testHeavyLoad() {
-        // Combined = 0.6*0.9 + 0.4*0.85 = 0.88 → heavy (0.85)
-        // SoC_TDP(20) × 0.85 + baseConsumption(12) + fanPower(dual=6×0.85≈5.1W)
-        // = 17 + 12 + 5.1 ≈ 34.1W
+        // Combined = 0.88 → effectiveLoad 0.20+0.704 = 0.904, fan 6×0.88 ≈ 5.28
+        // SoC_TDP(20) × 0.904 + 12 + 5.28 ≈ 18.1 + 12 + 5.28 ≈ 35.4W
         let hwProfile = HardwareProfile(
             platform: .studio, chipGeneration: .m2Base, ramSizeBytes: 8_589_934_592,
             fanModel: .dual, screenOff: false)
         let estimator = PowerEstimator(profile: hwProfile)
         let watts = estimator.estimateSystemPower(from: 0.9, gpuUtil: 0.85)
-        XCTAssertEqual(watts, 34.1, accuracy: 2.0, "Heavy load should be ~34W")
+        XCTAssertEqual(watts, 35.4, accuracy: 2.0, "Heavy load should be ~35W")
     }
 
     // MARK: - Screen off forces idle load factor
@@ -159,14 +157,14 @@ final class PowerEstimatorTests: XCTestCase {
     }
 
     func testM2MaxAtHalfLoad() {
-        // M2 Max SoC_TDP = 61W, medium load (0.55)
-        // 61 × 0.55 + 12 + 3.3 ≈ 48W
+        // M2 Max SoC_TDP = 61W, combined 0.5 → effectiveLoad 0.60, fan 6×0.5 = 3
+        // 61 × 0.60 + 12 + 3 = 36.6 + 12 + 3 ≈ 51.6W
         let hwProfile = HardwareProfile(
             platform: .studio, chipGeneration: .m2Max, ramSizeBytes: 8_589_934_592,
             fanModel: .dual, screenOff: false)
         let estimator = PowerEstimator(profile: hwProfile)
         let watts = estimator.estimateSystemPower(from: 0.5, gpuUtil: 0.5)
-        XCTAssertEqual(watts, 48.0, accuracy: 3.0, "M2 Max at half load should be ~48W")
+        XCTAssertEqual(watts, 51.6, accuracy: 3.0, "M2 Max at half load should be ~51.6W")
     }
 
     func testM1UltraAtFullLoad() {
@@ -280,8 +278,9 @@ final class PowerEstimatorTests: XCTestCase {
             fanModel: .dual, screenOff: false)
         let estimator = PowerEstimator(profile: hwProfile)
         let watts = estimator.estimateSystemPower(from: -0.5, gpuUtil: 1.0)
-        // CPU clamped to 0 → combined = 0.6*0 + 0.4*1.0 = 0.4 → medium (0.55)
-        XCTAssertEqual(watts, 29.0, accuracy: 0.1, "Negative CPU should clamp to medium load")
+        // CPU clamped to 0 → combined = 0.4 → effectiveLoad 0.52, fan 6×0.4 = 2.4
+        // 20 × 0.52 + 12 + 2.4 = 10.4 + 12 + 2.4 = 24.8W
+        XCTAssertEqual(watts, 24.8, accuracy: 0.1, "Negative CPU should clamp to 0")
     }
 
     func testClampsOverOneUtilization() {

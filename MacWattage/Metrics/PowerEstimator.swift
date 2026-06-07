@@ -27,23 +27,13 @@ public final class PowerEstimator: PowerEstimatorProtocol {
         let clampedCPU = min(1.0, max(0.0, cpuUtil))
         let clampedGPU = min(1.0, max(0.0, gpuUtil))
 
-        // Combined load signal: CPU primary, GPU secondary (50/50 blend).
+        // Combined load signal: CPU primary (0.6), GPU secondary (0.4).
         let combinedLoad = 0.6 * clampedCPU + 0.4 * clampedGPU
 
-        // Discrete load factor based on combined utilization level (screen-off is handled via effectiveLoad below):
-        //   light  < 0.40 → 0.25
-        //   medium < 0.70 → 0.55
-        //   heavy  < 1.00 → 0.85
-        //   full   ≥ 1.00 → 1.00
-        let loadFactor: Double = {
-            if combinedLoad < 0.40 { return 0.25 } // light
-            if combinedLoad < 0.70 { return 0.55 } // medium
-            if combinedLoad < 1.00 { return 0.85 } // heavy
-            return 1.0                            // full load
-        }()
-
-        // If screen is off, force idle load factor regardless of CPU/GPU.
-        let effectiveLoad = profile.screenOff ? 0.03 : loadFactor
+        // Continuous effective load: a 0.20 idle floor (baseline SoC activity even when "idle")
+        // ramping linearly to 1.0 at full load. Screen off forces a deep-idle 0.03.
+        // Continuous (not bucketed) so wattage tracks load smoothly instead of snapping between levels.
+        let effectiveLoad = profile.screenOff ? 0.03 : 0.20 + 0.80 * combinedLoad
 
         // Memory coefficient based on total physical RAM (bandwidth → power).
         let memoryCoefficient = memCoefficient(for: profile.ramSizeBytes)
@@ -56,9 +46,8 @@ public final class PowerEstimator: PowerEstimatorProtocol {
             }
         }()
 
-        // Fan power draw (only active under load; fixed wattage per spec, not load-proportional).
-        let fanPower: Double = {
-            if effectiveLoad < 0.3 { return 0.0 }
+        // Fan power draw scales continuously with load (zero at idle, max at full load).
+        let fanWatts: Double = {
             switch profile.fanModel {
             case .none:    return 0.0
             case .single:  return 3.0
@@ -66,8 +55,9 @@ public final class PowerEstimator: PowerEstimatorProtocol {
             case .turbo:   return 12.0
             }
         }()
+        let fanPower = profile.screenOff ? 0.0 : fanWatts * combinedLoad
 
-        // Final formula: SoC_TDP × loadFactor × memoryCoefficient + baseConsumption + fanPower
+        // Final formula: SoC_TDP × effectiveLoad × memoryCoefficient + baseConsumption + fanPower
         let socTDP = chipTDP(for: profile.chipGeneration)
         return socTDP * effectiveLoad * memoryCoefficient + baseConsumption + fanPower
     }
@@ -77,16 +67,8 @@ public final class PowerEstimator: PowerEstimatorProtocol {
         let clampedCPU = min(1.0, max(0.0, cpuUtil))
         let clampedGPU = min(1.0, max(0.0, gpuUtil))
         let combinedLoad = 0.6 * clampedCPU + 0.4 * clampedGPU
-
-        let loadFactor: Double = {
-            if combinedLoad < 0.40 { return 0.25 }
-            if combinedLoad < 0.70 { return 0.55 }
-            if combinedLoad < 1.00 { return 0.85 }
-            return 1.0
-        }()
-
-        let effectiveLoad = profile.screenOff ? 0.03 : loadFactor
-        return (loadFactor, effectiveLoad)
+        let effectiveLoad = profile.screenOff ? 0.03 : 0.20 + 0.80 * combinedLoad
+        return (effectiveLoad, effectiveLoad)
     }
 
     /// Convenience for tests: returns the memory coefficient.

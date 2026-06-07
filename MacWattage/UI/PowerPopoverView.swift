@@ -77,7 +77,7 @@ struct PowerPopoverView: View {
                     .foregroundColor(.secondary)
             } else {
                 BarChartView(data: dailyAverages)
-                    .frame(height: 80)
+                    .frame(height: 100)
             }
         }
     }

@@ -17,26 +17,26 @@ struct MonthlyTotalsView: View {
         } else {
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(Array(totals.reversed()), id: \.id) { total in
-                    HStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Text(monthLabel(forMonth: total.yearMonth))
                             .font(.caption)
-                            .frame(width: 40, alignment: .leading)
+                            .frame(width: 36, alignment: .leading)
 
-                        // Bar width is proportional to totalKWh relative to the max,
-                        // capped at ~200px wide. Minimum 4px so small values remain visible.
+                        // Bar width proportional to totalKWh relative to max, capped so the
+                        // row (label + bar + value) stays within the ~288px popover content width.
                         Rectangle()
                             .fill(Color.green)
                             .frame(
-                                width: max(4, CGFloat(total.totalKWh / max(maxKWh, 0.1)) * 200),
+                                width: max(4, CGFloat(total.totalKWh / max(maxKWh, 0.1)) * 130),
                                 height: 14
                             )
 
-                        Spacer(minLength: 0)
-                            .frame(width: 60, alignment: .trailing)
+                        Spacer(minLength: 4)
 
                         Text(String(format: "%.1f kWh", total.totalKWh))
                             .font(.caption)
                             .foregroundColor(.secondary)
+                            .fixedSize()
                     }
                 }
             }

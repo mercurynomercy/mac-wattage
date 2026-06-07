@@ -28,10 +28,10 @@ struct SparklineView: View {
     }
 
     private func yFor(_ v: Double, h: Double) -> Double {
-        let maxVal = values.max() ?? 0
-        let minVal = values.min() ?? 0
-        let range = maxVal - minVal
-        let norm: Double = range > 0 ? (v - minVal) / range : 0.5
+        // Baseline anchored at 0 watts; ceiling is the peak value plus 15% headroom
+        // so the chart shows absolute power magnitude, not just min-to-max range.
+        let ceiling = max((values.max() ?? 0) * 1.15, 0.001)
+        let norm = v / ceiling
         return (1.0 - max(0, min(norm, 1))) * h
     }
 

@@ -26,8 +26,14 @@ public struct DailyAverage: Codable, Identifiable {
     public let date: Date
     /// Average watts across all records in that day.
     public let averageWatts: Double
+    /// Total energy consumed that day in kilowatt-hours.
+    public let totalKWh: Double
 
-    enum CodingKeys: String, CodingKey { case id, date, averageWatts }
+    public init(id: UUID = UUID(), date: Date, averageWatts: Double, totalKWh: Double = 0) {
+        self.id = id; self.date = date; self.averageWatts = averageWatts; self.totalKWh = totalKWh
+    }
+
+    enum CodingKeys: String, CodingKey { case id, date, averageWatts, totalKWh }
 }
 
 /// Monthly total energy consumption in kWh for chart display. Codable and Identifiable.

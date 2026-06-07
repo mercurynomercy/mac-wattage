@@ -179,10 +179,12 @@ public final class PowerLogService: PowerLogServiceProtocol {
             let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) ?? Date.distantFuture
             let records = dailyBuffer.filter { $0.timestamp >= dayStart && $0.timestamp < dayEnd }
 
-            let avg = records.isEmpty ? 0.0 :
-                (records.reduce(0.0) { $0 + $1.watts } / Double(records.count))
+            let sumWatts = records.reduce(0.0) { $0 + $1.watts }
+            let avg = records.isEmpty ? 0.0 : sumWatts / Double(records.count)
+            // Flush model: each record ≈ 1 minute of average watts. kWh = sum(watts) / 60000.
+            let kWh = sumWatts / 60_000.0
 
-            averages.append(DailyAverage(id: UUID(), date: dayStart, averageWatts: avg))
+            averages.append(DailyAverage(id: UUID(), date: dayStart, averageWatts: avg, totalKWh: kWh))
         }
 
         // Reverse so oldest first (left to right on chart)
