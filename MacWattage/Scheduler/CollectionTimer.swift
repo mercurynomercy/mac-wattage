@@ -14,6 +14,8 @@ public final class CollectionTimer {
     private let metrics: IOKitAdapterProtocol
     /// TDP-based power estimator — translates utilization fractions to watts.
     private let estimator: PowerEstimatorProtocol
+    /// Measured SoC power source (IOReport). nil → always fall back to the estimate.
+    private let powerReader: SoCPowerReaderProtocol?
     /// Persistent log service — writes records to disk.
     private let logService: PowerLogServiceProtocol
 
@@ -35,12 +37,14 @@ public final class CollectionTimer {
         interval: Int,
         metrics: IOKitAdapterProtocol,
         estimator: PowerEstimatorProtocol,
+        powerReader: SoCPowerReaderProtocol?,
         logService: PowerLogServiceProtocol,
         uiUpdate: @escaping @MainActor (PowerRecord) -> Void
     ) {
         self.interval = interval
         self.metrics = metrics
         self.estimator = estimator
+        self.powerReader = powerReader
         self.logService = logService
         self.uiUpdate = uiUpdate
 
@@ -84,8 +88,14 @@ public final class CollectionTimer {
             let cpuUtil = self.metrics.cpuUtilization()
             let gpuUtil = self.metrics.gpuUtilization()
 
-            // Estimate total system power from utilization fractions.
-            let watts = self.estimator.estimateSystemPower(from: cpuUtil, gpuUtil: gpuUtil)
+            // Prefer measured SoC power (IOReport) + modeled non-SoC offset for whole-system
+            // wall power; fall back to the pure TDP estimate when no measurement is available.
+            let watts: Double
+            if let socWatts = self.powerReader?.socPowerWatts() {
+                watts = self.estimator.wholeSystemPower(socWatts: socWatts, cpuUtil: cpuUtil, gpuUtil: gpuUtil)
+            } else {
+                watts = self.estimator.estimateSystemPower(from: cpuUtil, gpuUtil: gpuUtil)
+            }
 
             // Charging state is nil for desktop Macs without batteries.
             let isCharging = self.metrics.isCharging()

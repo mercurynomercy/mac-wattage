@@ -28,6 +28,7 @@
 		E50416192B13722C0B1FDF6F /* MenuBarWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA03515DE58B95DB297EB876 /* MenuBarWidgetView.swift */; };
 		FF6DD8B7C196C83A13EE4B9C /* IOKitAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F92248A21D6141F22C6C0409 /* IOKitAdapter.swift */; };
 		D6E7F8A9B0C123456789ABCD /* IOKitImplementation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D6E7F8A9B0123456789ABC /* IOKitImplementation.swift */; };
+		EE01EE01EE01EE01EE01EE01 /* IOReportPowerReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF02FF02FF02FF02FF02FF02 /* IOReportPowerReader.swift */; };
 		AAAA0000AAAA0000AAAA0002 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AAAA0000AAAA0000AAAA0001 /* Assets.xcassets */; };
 
 /* End PBXBuildFile section */
@@ -57,6 +58,7 @@
 		EA4CD4737867B21CE6995FBB /* PlatformDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformDetector.swift; sourceTree = "<group>"; };
 		F92248A21D6141F22C6C0409 /* IOKitAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOKitAdapter.swift; sourceTree = "<group>"; };
 		C5D6E7F8A9B0123456789ABC /* IOKitImplementation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOKitImplementation.swift; name = IOKitImplementation.swift; sourceTree = "<group>"; };
+		FF02FF02FF02FF02FF02FF02 /* IOReportPowerReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOReportPowerReader.swift; name = IOReportPowerReader.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -128,6 +130,7 @@
 			children = (
 				F92248A21D6141F22C6C0409 /* IOKitAdapter.swift */,
 			C5D6E7F8A9B0123456789ABC /* IOKitImplementation.swift */,
+			FF02FF02FF02FF02FF02FF02 /* IOReportPowerReader.swift */,
 				EA4CD4737867B21CE6995FBB /* PlatformDetector.swift */,
 				79CCCF8EFEDA14DF2FB2303B /* PowerEstimator.swift */,
 			F7880C0F413F1817BBA6A2EC7EDA9D1D /* PowerConfig.swift */,
@@ -270,6 +273,7 @@
 				3BD9692C4FF9393A04CA2A89 /* CollectionTimer.swift in Sources */,
 				FF6DD8B7C196C83A13EE4B9C /* IOKitAdapter.swift in Sources */,
 			D6E7F8A9B0C123456789ABCD /* IOKitImplementation.swift in Sources */,
+			EE01EE01EE01EE01EE01EE01 /* IOReportPowerReader.swift in Sources */,
 				23A49A62E4FEFE943F459D9C /* Logger.swift in Sources */,
 				8CCFC5864D5D9C04C24DAFDB /* MacWattageApp.swift in Sources */,
 				99B1F9F694E2182D138E3D33 /* MenuBarViewModel.swift in Sources */,

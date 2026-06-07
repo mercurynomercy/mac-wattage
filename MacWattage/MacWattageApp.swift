@@ -53,6 +53,9 @@ struct MacWattageApp: App {
         // Create estimator with full hardware profile for accurate TDP-based estimation.
         let estimator = PowerEstimator(profile: hwProfile)
 
+        // Measured SoC power via IOReport (nil on unsupported hardware → TDP fallback).
+        let powerReader = IOReportPowerReader()
+
         // 6. Wire up UI update callback to shared view models.
         let menuBarVM = MenuBarViewModel.shared
         let popoverVM = PopoverViewModel.shared
@@ -63,6 +66,7 @@ struct MacWattageApp: App {
             interval: 1,
             metrics: adapter,
             estimator: estimator,
+            powerReader: powerReader,
             logService: svc,
             uiUpdate: { record in
                 #if DEBUG
