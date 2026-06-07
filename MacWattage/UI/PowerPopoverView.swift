@@ -24,8 +24,6 @@ struct PowerPopoverView: View {
             sevenDayChartSection
             Divider()
             monthlyTotalsSection
-            Divider()
-            settingsButton
         }
         .frame(width: 320)
         .padding()
@@ -36,13 +34,20 @@ struct PowerPopoverView: View {
     // MARK: - Sections
 
     private var topBar: some View {
-        HStack(spacing: 0) {
+        HStack {
+            settingsButton  // gear icon, top-left
+
             Spacer()
 
-            Button("Quit") {
+            Button {
                 NSApplication.shared.terminate(nil)
+            } label: {
+                Image(systemName: "power")
             }
-            .font(.caption)
+            .buttonStyle(.plain)
+            .font(.system(size: 15))
+            .foregroundStyle(.secondary)
+            .help("Quit")
         }
     }
 
@@ -93,7 +98,7 @@ struct PowerPopoverView: View {
 
     private var sevenDayChartSection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("7-Day Power Consumption")
+            Text("7-Day Power Consumption (kWh)")
                 .font(.headline)
 
             if dailyAverages.isEmpty {
@@ -126,16 +131,21 @@ struct PowerPopoverView: View {
     private var settingsButton: some View {
         // macOS 14+ requires SettingsLink to open the Settings scene; the old
         // showSettingsWindow: selector now throws. macOS 13 falls back to the selector.
-        if #available(macOS 14, *) {
-            SettingsLink {
-                Text("Settings")
-            }
-        } else {
-            Button("Settings") {
-                NSApp.activate(ignoringOtherApps: true)
-                NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        let icon = Image(systemName: "gearshape.fill")
+        Group {
+            if #available(macOS 14, *) {
+                SettingsLink { icon }
+            } else {
+                Button {
+                    NSApp.activate(ignoringOtherApps: true)
+                    NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+                } label: { icon }
             }
         }
+        .buttonStyle(.plain)
+        .font(.system(size: 15))
+        .foregroundStyle(.secondary)
+        .help("Settings")
     }
 
     // MARK: - Data sync

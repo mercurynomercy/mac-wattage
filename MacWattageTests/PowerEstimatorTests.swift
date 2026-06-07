@@ -334,6 +334,48 @@ final class PowerEstimatorTests: XCTestCase {
         )
     }
 
+    // MARK: - wholeSystemPower (measured SoC + modeled non-SoC offset)
+
+    func testWholeSystemPowerStudioAddsBaseAndFan() {
+        // Studio: base 12, fan dual 6×load. At full load: measured 30 + 12 + 6 = 48. No display.
+        let hwProfile = HardwareProfile(
+            platform: .studio, chipGeneration: .m2Base, ramSizeBytes: 8_589_934_592,
+            fanModel: .dual, screenOff: false)
+        let estimator = PowerEstimator(profile: hwProfile)
+        let watts = estimator.wholeSystemPower(socWatts: 30.0, cpuUtil: 1.0, gpuUtil: 1.0)
+        XCTAssertEqual(watts, 48.0, accuracy: 0.01, "Studio whole-system = measured + base + fan")
+    }
+
+    func testWholeSystemPowerLaptopAddsDisplay() {
+        // Laptop: base 5, fan dual 6×0 at idle, display 5. measured 8 + 5 + 0 + 5 = 18.
+        let hwProfile = HardwareProfile(
+            platform: .laptop, chipGeneration: .m4Max, ramSizeBytes: 137_438_953_472,
+            fanModel: .dual, screenOff: false)
+        let estimator = PowerEstimator(profile: hwProfile)
+        let watts = estimator.wholeSystemPower(socWatts: 8.0, cpuUtil: 0.0, gpuUtil: 0.0)
+        XCTAssertEqual(watts, 18.0, accuracy: 0.01, "Laptop whole-system adds 5W display term")
+    }
+
+    func testWholeSystemPowerScreenOffDropsDisplayAndFan() {
+        // Screen off: no display, no fan. Laptop base 5 only. measured 6 + 5 = 11.
+        let hwProfile = HardwareProfile(
+            platform: .laptop, chipGeneration: .m4Max, ramSizeBytes: 137_438_953_472,
+            fanModel: .dual, screenOff: true)
+        let estimator = PowerEstimator(profile: hwProfile)
+        let watts = estimator.wholeSystemPower(socWatts: 6.0, cpuUtil: 1.0, gpuUtil: 1.0)
+        XCTAssertEqual(watts, 11.0, accuracy: 0.01, "Screen off drops display and fan, base only")
+    }
+
+    func testWholeSystemPowerClampsNegativeSoC() {
+        // A bogus negative measured value is clamped to 0; only the offset remains.
+        let hwProfile = HardwareProfile(
+            platform: .studio, chipGeneration: .m2Base, ramSizeBytes: 8_589_934_592,
+            fanModel: .dual, screenOff: false)
+        let estimator = PowerEstimator(profile: hwProfile)
+        let watts = estimator.wholeSystemPower(socWatts: -50.0, cpuUtil: 0.0, gpuUtil: 0.0)
+        XCTAssertEqual(watts, 12.0, accuracy: 0.01, "Negative SoC clamps to 0, base remains")
+    }
+
 }
 
 // MARK: - Convenience extensions on HardwareProfile for tests

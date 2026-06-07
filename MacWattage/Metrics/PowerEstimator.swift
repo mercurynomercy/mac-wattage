@@ -7,6 +7,10 @@ import Foundation
 public protocol PowerEstimatorProtocol {
     /// Estimate total system power in watts from CPU and GPU utilization fractions.
     func estimateSystemPower(from cpuUtil: Double, gpuUtil: Double) -> Double
+
+    /// Whole-system power in watts from a measured SoC compute figure plus the
+    /// modeled non-SoC offset (base + fan + display).
+    func wholeSystemPower(socWatts: Double, cpuUtil: Double, gpuUtil: Double) -> Double
 }
 
 /// TDP-based power estimator using the formula:
@@ -38,7 +42,30 @@ public final class PowerEstimator: PowerEstimatorProtocol {
         // Memory coefficient based on total physical RAM (bandwidth → power).
         let memoryCoefficient = memCoefficient(for: profile.ramSizeBytes)
 
-        // Base consumption (SSD + motherboard idle power).
+        // Final formula: SoC_TDP × effectiveLoad × memoryCoefficient + non-SoC offset.
+        let socTDP = chipTDP(for: profile.chipGeneration)
+        return socTDP * effectiveLoad * memoryCoefficient + nonSoCOffset(load: combinedLoad)
+    }
+
+    /// Whole-system power from a *measured* SoC compute figure (IOReport).
+    /// Adds the non-SoC offset (SSD/logic-board base + load-scaled fan + display)
+    /// to the measured CPU+GPU+ANE watts so the total approximates wall-socket draw.
+    /// The compute term is measured here, not estimated — only the offset is modeled.
+    public func wholeSystemPower(socWatts: Double, cpuUtil: Double, gpuUtil: Double) -> Double {
+        let clampedCPU = min(1.0, max(0.0, cpuUtil))
+        let clampedGPU = min(1.0, max(0.0, gpuUtil))
+        let combinedLoad = 0.6 * clampedCPU + 0.4 * clampedGPU
+
+        // Internal laptop panel draw (~5 W typical); desktops have no built-in display.
+        // The TDP-estimate path folds display into its base, so display is added only here.
+        let displayPower = (profile.platform == .laptop && !profile.screenOff) ? 5.0 : 0.0
+
+        return max(0.0, socWatts) + nonSoCOffset(load: combinedLoad) + displayPower
+    }
+
+    /// Non-SoC power: SSD/logic-board idle base plus load-scaled fans.
+    /// Zero fan contribution when the screen is off (deep idle).
+    private func nonSoCOffset(load combinedLoad: Double) -> Double {
         let baseConsumption: Double = {
             switch profile.platform {
             case .laptop: return 5.0
@@ -57,9 +84,7 @@ public final class PowerEstimator: PowerEstimatorProtocol {
         }()
         let fanPower = profile.screenOff ? 0.0 : fanWatts * combinedLoad
 
-        // Final formula: SoC_TDP × effectiveLoad × memoryCoefficient + baseConsumption + fanPower
-        let socTDP = chipTDP(for: profile.chipGeneration)
-        return socTDP * effectiveLoad * memoryCoefficient + baseConsumption + fanPower
+        return baseConsumption + fanPower
     }
 
     /// Compute combined load factor from utilization inputs (for tests that need it).
