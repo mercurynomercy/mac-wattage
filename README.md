@@ -172,7 +172,8 @@ watts = 57 × 0.744 × 1.10 + 5.0 (laptop) + 4.08
 - **格式**: BinaryPropertyList（`PropertyListEncoder` / `Decoder`，原生高效）
 - **存储位置**: 默认 `~/Library/Application Support/Mac Wattage/`，用户可在设置中更改
 - **写入方式**: Journal-mode（先写临时文件再原子重命名）
-- **数据轮转**: 跨月时自动将旧月份记录归档为月度 kWh 总览，仅保留当月原始数据；保留约 30 天原始数据，防止日志无限增长
+- **数据轮转（按自然月）**: `RotationManager` 在 **App 启动时** 检查月份是否变化（对比 UserDefaults 中的 `lastRotationMonth`）。跨月时，将**当前月之前**的所有原始记录按 `yyyy-MM` 分组、算成月度 kWh 总计合并入 `monthly-log.plist`，再从 `daily-log.plist` 删除这些原始记录
+- **原始数据保留量**: **仅当前自然月**。因此实际保留时长在 ~1–31 天间浮动（取决于今天是本月第几天）；月度总计永久保留（UI 只展示最近 12 个月）
 - **秒级缓冲**: 内存中维护最近 120 条记录（约 2 分钟，1s 间隔），用于实时平均/峰值计算和 Sparkline；每 60 秒将缓冲区聚合为一条记录写入 `daily-log.plist`，保持日志精简
 - **kWh 换算**: 每条聚合记录代表约 1 分钟平均瓦数，故 `kWh = Σ(watts) / 60000`
 

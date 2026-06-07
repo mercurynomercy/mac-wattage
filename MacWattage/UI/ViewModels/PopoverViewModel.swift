@@ -24,6 +24,9 @@ import SwiftUI
     /// Sparkline data points for live chart, maximum of 36 values.
     @Published var sparklineData: [Double] = []
 
+    /// Static device label (chip + RAM), e.g. "M4 Max · 128GB". Set once at startup.
+    var deviceLabel: String = ""
+
     /// Whether there is meaningful data to display beyond zero values.
     var hasData: Bool { !dailyAverages.isEmpty || !monthlyTotals.isEmpty }
 

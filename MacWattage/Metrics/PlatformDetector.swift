@@ -86,8 +86,9 @@ public enum PlatformDetector {
     /// Detect total RAM size in bytes via sysctl(hw.memsize).
     public static func detectRAMSize() -> Int64 {
         var size: Int64 = 0
-        let result = sysctlbyname("hw.memsize", &size, nil, nil, 0)
-        guard result == 0 else { return 8 * 1024 * 1024 * 1024 } // fallback: 8 GB
+        var len = MemoryLayout<Int64>.size  // oldlenp — required, else sysctl fails
+        let result = sysctlbyname("hw.memsize", &size, &len, nil, 0)
+        guard result == 0, size > 0 else { return 8 * 1024 * 1024 * 1024 } // fallback: 8 GB
         return size
     }
 
@@ -215,6 +216,37 @@ public struct HardwareProfile {
     /// Convenience getter for RAM in GB (rounded up).
     public var ramGB: Int {
         Int((ramSizeBytes + 1024 * 1024 * 1024 - 1) / (1024 * 1024 * 1024))
+    }
+
+    /// Display label for the popover, e.g. "M4 Max · 128GB".
+    public var deviceLabel: String {
+        "\(chipGeneration.displayName) · \(ramGB)GB"
+    }
+}
+
+extension ChipGeneration {
+    /// Human-readable marketing name, e.g. "M4 Max".
+    public var displayName: String {
+        switch self {
+        case .m1Base:  return "M1"
+        case .m2Base:  return "M2"
+        case .m3Base:  return "M3"
+        case .m4Base:  return "M4"
+        case .m5Base:  return "M5"
+        case .m1Pro:   return "M1 Pro"
+        case .m2Pro:   return "M2 Pro"
+        case .m3Pro:   return "M3 Pro"
+        case .m4Pro:   return "M4 Pro"
+        case .m5Pro:   return "M5 Pro"
+        case .m1Max:   return "M1 Max"
+        case .m2Max:   return "M2 Max"
+        case .m3Max:   return "M3 Max"
+        case .m4Max:   return "M4 Max"
+        case .m5Max:   return "M5 Max"
+        case .m1Ultra: return "M1 Ultra"
+        case .m2Ultra: return "M2 Ultra"
+        case .m3Ultra: return "M3 Ultra"
+        }
     }
 }
 

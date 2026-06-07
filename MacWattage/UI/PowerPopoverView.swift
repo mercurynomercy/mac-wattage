@@ -8,6 +8,7 @@ struct PowerPopoverView: View {
     @State private var dailyAverages: [DailyAverage] = []
     @State private var monthlyTotals: [MonthlyTotal] = []
     @State private var sparklineData: [Double] = []
+    @State private var deviceLabel: String = ""
 
     private var hasData: Bool { !dailyAverages.isEmpty || !monthlyTotals.isEmpty }
 
@@ -33,19 +34,30 @@ struct PowerPopoverView: View {
     // MARK: - Sections
 
     private var currentWattsSection: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 2) {
             if hasData {
                 Text("\(currentWatts, specifier: "%.0f")W")
                     .font(.system(size: 32, weight: .bold, design: .monospaced))
                     .foregroundColor(.black)
-
-                Text("Avg: \(sessionAverage, specifier: "%.1f")W · Peak: \(sessionPeak, specifier: "%.1f")W")
-                    .foregroundColor(.black)
-                    .font(.caption)
             } else {
                 Text("Collecting data...")
                     .font(.caption)
                     .foregroundColor(.secondary)
+            }
+
+            if !deviceLabel.isEmpty {
+                HStack(spacing: 5) {
+                    Image(systemName: "apple.logo")
+                    Text(deviceLabel)
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+            }
+
+            if hasData {
+                Text("Avg: \(sessionAverage, specifier: "%.1f")W · Peak: \(sessionPeak, specifier: "%.1f")W")
+                    .foregroundColor(.black)
+                    .font(.caption)
             }
         }
     }
@@ -116,6 +128,7 @@ struct PowerPopoverView: View {
         dailyAverages = vm.dailyAverages
         monthlyTotals = vm.monthlyTotals
         sparklineData = vm.sparklineData
+        deviceLabel = vm.deviceLabel
     }
 
     // MARK: - Notification names

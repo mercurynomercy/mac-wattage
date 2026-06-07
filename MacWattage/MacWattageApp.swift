@@ -87,6 +87,7 @@ struct MacWattageApp: App {
         NSLog("[App] Wired up popover VM, service log dir: \(store.logDirectory.path)")
         #endif
         popoverVM.setService(svc)
+        popoverVM.deviceLabel = hwProfile.deviceLabel
 
         return (timer, flushTimer, svc)
     }

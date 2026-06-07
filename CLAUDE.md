@@ -96,7 +96,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ### Data storage
 
 - **Plist format** (BinaryPropertyList) for the log file. Use `PropertyListEncoder`/`Decoder`.
-- **Retention policy:** 30 days of raw data at default interval. Implement cleanup — never let the log grow unbounded.
+- **Retention policy:** Raw records are retained for the **current calendar month only**. On app launch, `RotationManager` checks if the month has changed; if so, it archives all pre-current-month records into monthly kWh totals and deletes those raw records from the daily log. (Actual raw retention thus ranges ~1–31 days depending on the day of month.) Monthly totals are kept indefinitely. Never let the daily log grow unbounded.
 - **Aggregation is computed on-demand** from raw data, not pre-aggregated into separate stores.
 
 ### UI
