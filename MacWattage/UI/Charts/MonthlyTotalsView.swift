@@ -1,33 +1,44 @@
 import SwiftUI
 
 /// Horizontal bar list showing monthly total energy consumption in kWh.
+/// Shows the two most recent months by default; "View more" expands to all months.
 struct MonthlyTotalsView: View {
     let totals: [MonthlyTotal]
 
-    /// Maximum kWh value for proportional bar scaling.
+    @State private var expanded = false
+
+    /// Newest month first.
+    private var ordered: [MonthlyTotal] { totals.reversed() }
+
+    /// Months currently visible — two most recent unless expanded.
+    private var visible: [MonthlyTotal] {
+        expanded ? ordered : Array(ordered.prefix(2))
+    }
+
+    /// Maximum kWh among visible rows, for proportional bar scaling.
     private var maxKWh: Double {
-        totals.map(\.totalKWh).max() ?? 1.0
+        visible.map(\.totalKWh).max() ?? 1.0
     }
 
     var body: some View {
-        if totals.isEmpty || maxKWh <= 0 {
+        if totals.isEmpty || (totals.map(\.totalKWh).max() ?? 0) <= 0 {
             Text("No data yet")
                 .font(.caption)
                 .foregroundColor(.secondary)
         } else {
             VStack(alignment: .leading, spacing: 2) {
-                ForEach(Array(totals.reversed()), id: \.id) { total in
+                ForEach(visible, id: \.id) { total in
                     HStack(spacing: 6) {
                         Text(monthLabel(forMonth: total.yearMonth))
                             .font(.caption)
-                            .frame(width: 36, alignment: .leading)
+                            .frame(width: 64, alignment: .leading)
 
                         // Bar width proportional to totalKWh relative to max, capped so the
                         // row (label + bar + value) stays within the ~288px popover content width.
                         Rectangle()
                             .fill(Color.green)
                             .frame(
-                                width: max(4, CGFloat(total.totalKWh / max(maxKWh, 0.1)) * 130),
+                                width: max(4, CGFloat(total.totalKWh / max(maxKWh, 0.1)) * 110),
                                 height: 14
                             )
 
@@ -39,6 +50,16 @@ struct MonthlyTotalsView: View {
                             .fixedSize()
                     }
                 }
+
+                if ordered.count > 2 {
+                    Button(expanded ? "View less" : "View more") {
+                        expanded.toggle()
+                    }
+                    .buttonStyle(.plain)
+                    .font(.caption)
+                    .foregroundColor(.blue)
+                    .padding(.top, 2)
+                }
             }
         }
     }
@@ -48,7 +69,7 @@ struct MonthlyTotalsView: View {
         formatter.dateFormat = "yyyy-MM"
         guard let date = formatter.date(from: yearMonth) else { return yearMonth }
 
-        formatter.dateFormat = "MMM"
+        formatter.dateFormat = "MMM yyyy"
         return formatter.string(from: date)
     }
 }

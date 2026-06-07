@@ -105,7 +105,6 @@ struct PowerPopoverView: View {
                     .foregroundColor(.secondary)
             } else {
                 MonthlyTotalsView(totals: monthlyTotals)
-                    .frame(maxHeight: 168) // ~12 rows × (14px + 2px spacing).
             }
         }
     }
