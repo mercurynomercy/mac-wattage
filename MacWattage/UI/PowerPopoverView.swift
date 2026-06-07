@@ -51,7 +51,7 @@ struct PowerPopoverView: View {
             if hasData {
                 Text("\(currentWatts, specifier: "%.0f")W")
                     .font(.system(size: 32, weight: .bold, design: .monospaced))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
             } else {
                 Text("Collecting data...")
                     .font(.caption)
@@ -69,7 +69,7 @@ struct PowerPopoverView: View {
 
             if hasData {
                 Text("Avg: \(sessionAverage, specifier: "%.1f")W · Peak: \(sessionPeak, specifier: "%.1f")W")
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                     .font(.caption)
             }
         }

@@ -22,7 +22,7 @@ struct BarChartView: View {
                             .foregroundColor(.secondary)
 
                         Capsule()
-                            .fill(Color.black)
+                            .fill(Color.green)
                             .frame(
                                 width: 14,
                                 height: max(CGFloat(data[index].totalKWh) * scale, 2)

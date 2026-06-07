@@ -5,6 +5,12 @@ public protocol PowerLogServiceProtocol {
     /// Append a new power measurement record to the daily log. Thread-safe (uses serial write queue).
     func append(_ record: PowerRecord) async throws
 
+    /// Record a live sample into the in-memory seconds buffer only (no disk write).
+    /// Per-second samples feed live metrics; they are aggregated to the daily log
+    /// once per minute via `flushSecondsBuffer`. Keeping them out of the daily log
+    /// is what makes the `kWh = sum(watts) / 60000` (one record ≈ one minute) model correct.
+    func recordSample(_ record: PowerRecord) async
+
     /// Filter records within a date range (inclusive on both ends).
     func records(in range: DateRange) -> [PowerRecord]
 
@@ -131,6 +137,15 @@ public final class PowerLogService: PowerLogServiceProtocol {
 
             // Update the in-memory buffer
             self.dailyBuffer = buffer  // Direct property assignment from within sync block on the queue itself
+        }
+    }
+
+    public func recordSample(_ record: PowerRecord) async {
+        await MainActor.run { [self] in
+            self.secondsBuffer.append(record)
+            if self.secondsBuffer.count > maxSecondsBuffer {
+                self.secondsBuffer.removeFirst(self.secondsBuffer.count - maxSecondsBuffer)
+            }
         }
     }
 

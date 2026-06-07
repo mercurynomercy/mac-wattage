@@ -93,14 +93,10 @@ public final class CollectionTimer {
             // Build the record — id and timestamp are auto-generated defaults.
             let record = PowerRecord(watts: watts, isCharging: isCharging)
 
-            // Fire-and-forget write to persistent storage. Log failures for debugging.
-            Task {
-                do { try await self.logService.append(record) } catch {
-                    #if DEBUG
-                    NSLog("[CollectionTimer] Failed to append record: \(error.localizedDescription)")
-                    #endif
-                }
-            }
+            // Feed the in-memory live buffer only. The 60s flush timer aggregates these
+            // per-second samples into one daily-log record per minute — writing every
+            // sample to disk here would inflate kWh ~60x and rewrite the whole log each second.
+            Task { await self.logService.recordSample(record) }
 
             // Push to UI on the main thread.
             DispatchQueue.main.async { [uiUpdate] in

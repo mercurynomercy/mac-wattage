@@ -60,6 +60,10 @@ final class MockPowerLogService: NSObject, PowerLogServiceProtocol {
         appendedRecords.append(record)
     }
 
+    func recordSample(_ record: PowerRecord) async {
+        appendedRecords.append(record)
+    }
+
     func records(in range: DateRange) -> [PowerRecord] {
         appendedRecords.filter { $0.timestamp >= range.start && $0.timestamp <= range.end }
     }
