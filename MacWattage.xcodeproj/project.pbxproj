@@ -28,6 +28,7 @@
 		E50416192B13722C0B1FDF6F /* MenuBarWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA03515DE58B95DB297EB876 /* MenuBarWidgetView.swift */; };
 		FF6DD8B7C196C83A13EE4B9C /* IOKitAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F92248A21D6141F22C6C0409 /* IOKitAdapter.swift */; };
 		D6E7F8A9B0C123456789ABCD /* IOKitImplementation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D6E7F8A9B0123456789ABC /* IOKitImplementation.swift */; };
+		AAAA0000AAAA0000AAAA0002 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AAAA0000AAAA0000AAAA0001 /* Assets.xcassets */; };
 
 /* End PBXBuildFile section */
 
@@ -48,6 +49,7 @@
 		A96AEC41DAB4F01AA22FCF57 /* SparklineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparklineView.swift; sourceTree = "<group>"; };
 		B35DE5C4837AB6A1029B4862 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		BBC2C4DC97FA20FE05205C39 /* MacWattageApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacWattageApp.swift; sourceTree = "<group>"; };
+		AAAA0000AAAA0000AAAA0001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D75B316811D34E2D3DD08260 /* PowerRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerRecord.swift; sourceTree = "<group>"; };
 		DA03515DE58B95DB297EB876 /* MenuBarWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarWidgetView.swift; sourceTree = "<group>"; };
 		DE3FBAF6CD63AC97C05F7B63 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
@@ -155,8 +157,9 @@
 				565488E56ED4B78F64E3CF55 /* Scheduler */,
 				290FB3F0643C64261C501381 /* Shared */,
 				C850334F4B71DCD7DBB7F75A /* UI */,
-			
-			D8A1B2C3E4F50607 /* PlatformSupport.m */,);
+
+			D8A1B2C3E4F50607 /* PlatformSupport.m */,
+				AAAA0000AAAA0000AAAA0001 /* Assets.xcassets */,);
 			path = MacWattage;
 			sourceTree = "<group>";
 		};
@@ -185,6 +188,7 @@
 			buildConfigurationList = 4A45A822747DEC7A4B4C1686 /* Build configuration list for PBXNativeTarget "MacWattage" */;
 			buildPhases = (
 				87995187A05C0F57B3679DAC /* Sources */,
+				AAAA0000AAAA0000AAAA0003 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -230,6 +234,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AAAA0000AAAA0000AAAA0003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAAA0000AAAA0000AAAA0002 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		695CF2B1EC745EC89E19E29A /* Sources */ = {

@@ -57,9 +57,10 @@ struct MacWattageApp: App {
         let menuBarVM = MenuBarViewModel.shared
         let popoverVM = PopoverViewModel.shared
 
-        // 7. Create and start collection timer (fires immediately, then at interval).
+        // 7. Create and start collection timer (fires immediately, then every second).
+        // Forced to 1s — the kWh aggregation model assumes ~60 samples per flushed minute.
         let timer = CollectionTimer(
-            interval: store.collectionInterval,
+            interval: 1,
             metrics: adapter,
             estimator: estimator,
             logService: svc,

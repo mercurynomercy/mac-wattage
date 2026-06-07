@@ -38,7 +38,11 @@ public final class Store: ObservableObject {
     /// Auto-launch at login toggle (default false). On set, updates the system login item list.
     public var autoLaunchAtLogin: Bool {
         get { readBool(forKey: StoreKey.autoLaunchAtLogin) }
-        set { write(newValue, forKey: StoreKey.autoLaunchAtLogin); updateLoginItems(newValue) }
+        set {
+            objectWillChange.send() // Notify SwiftUI — this is a UserDefaults-backed computed property.
+            write(newValue, forKey: StoreKey.autoLaunchAtLogin)
+            updateLoginItems(newValue)
+        }
     }
 
     /// Creates a store backed by the given UserDefaults. Pass nil to use standard defaults directly.

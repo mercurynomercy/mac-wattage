@@ -21,13 +21,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             name: SettingsWindowView.clearAllLogs,
             object: nil
         )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleOpenSettings),
-            name: PowerPopoverView.openSettings,
-            object: nil
-        )
     }
 
     /// Stop the timers when app is about to terminate.
@@ -54,10 +47,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             // Reset UI components on main thread.
             await MainActor.run { self.resetUI() }
         }
-    }
-
-    @objc private func handleOpenSettings() {
-        NSApp.activate(ignoringOtherApps: true)
     }
 
     @MainActor private func resetUI() {

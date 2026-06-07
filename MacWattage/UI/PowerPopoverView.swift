@@ -109,10 +109,19 @@ struct PowerPopoverView: View {
         }
     }
 
+    @ViewBuilder
     private var settingsButton: some View {
-        Button("Settings") {
-            NSApp.activate(ignoringOtherApps: true)
-            NotificationCenter.default.post(name: PowerPopoverView.openSettings, object: nil)
+        // macOS 14+ requires SettingsLink to open the Settings scene; the old
+        // showSettingsWindow: selector now throws. macOS 13 falls back to the selector.
+        if #available(macOS 14, *) {
+            SettingsLink {
+                Text("Settings")
+            }
+        } else {
+            Button("Settings") {
+                NSApp.activate(ignoringOtherApps: true)
+                NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+            }
         }
     }
 
@@ -129,8 +138,4 @@ struct PowerPopoverView: View {
         sparklineData = vm.sparklineData
         deviceLabel = vm.deviceLabel
     }
-
-    // MARK: - Notification names
-
-    static let openSettings = Notification.Name("openSettings")
 }

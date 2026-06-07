@@ -3,69 +3,20 @@ import SwiftUI
 struct SettingsWindowView: View {
     @ObservedObject var store = Store()
 
-    @State private var showFilePicker: Bool = false
     @State private var showClearConfirmation: Bool = false
 
     var body: some View {
         VStack(spacing: 20) {
-            collectionIntervalSection
-
-            Divider()
-
-            logDirectorySection
-
-            Divider()
-
             autoLaunchSection
 
             Divider()
 
             dataManagementSection
         }
-        .frame(width: 420, height: 340) // Fixed window size for the settings panel.
+        .frame(width: 420, height: 180) // Fixed window size for the settings panel.
     }
 
     // MARK: - Sections
-
-    private var collectionIntervalSection: some View {
-        Form {
-            Picker("Collection Interval", selection: $store.collectionInterval) {
-                Text("Every second").tag(1)
-                Text("Every 10 seconds").tag(10)
-                Text("Every minute").tag(60)
-            }
-            .pickerStyle(.radioGroup) // Show as a vertical group rather than segmented control.
-        }
-    }
-
-    private var logDirectorySection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Log Directory")
-                .font(.headline)
-
-            HStack {
-                Text(store.logDirectory.path)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-
-                Spacer()
-
-                Button("Change...") { showFilePicker = true }
-            }
-        }
-        .fileImporter( // macOS 13+ file picker restricted to folder selection.
-            isPresented: $showFilePicker,
-            allowedContentTypes: [.folder]
-        ) { result in
-            switch result {
-            case .success(let url):
-                store.logDirectoryPath = url.absoluteString // Persist the chosen path for next launch.
-            case .failure:
-                break // User cancelled or error — ignore silently.
-            }
-        }
-    }
 
     private var autoLaunchSection: some View {
         VStack(alignment: .leading, spacing: 8) {
