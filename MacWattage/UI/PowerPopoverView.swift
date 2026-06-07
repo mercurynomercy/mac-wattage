@@ -154,11 +154,15 @@ struct PowerPopoverView: View {
         let vm = PopoverViewModel.shared
         vm.refresh()
         currentWatts = vm.currentWatts
-        sessionAverage = vm.sessionAverage
-        sessionPeak = vm.sessionPeak
         dailyAverages = vm.dailyAverages
         monthlyTotals = vm.monthlyTotals
         sparklineData = vm.sparklineData
         deviceLabel = vm.deviceLabel
+
+        // Derive Avg/Peak from the same series the Live Power graph shows, so the
+        // numbers always match the chart (the service's seconds buffer uses a
+        // different window and is cleared each flush, which made them drift).
+        sessionAverage = sparklineData.isEmpty ? 0 : sparklineData.reduce(0, +) / Double(sparklineData.count)
+        sessionPeak = sparklineData.max() ?? 0
     }
 }
