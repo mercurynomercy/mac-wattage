@@ -22,6 +22,8 @@
 	<string>13.0</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.finance</string>
+	<key>LSUIElement</key>
+	<true/>
 	<key>XSAppIconAssets</key>
 	<string></string>
 </dict>
