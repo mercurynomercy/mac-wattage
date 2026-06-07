@@ -13,6 +13,14 @@ A macOS menu bar app that tracks real-time system power consumption on MacBook /
 
 ---
 
+## Screenshot
+
+<p align="center">
+  <img src="doc/assets/popover.png" alt="Mac Wattage popover dashboard" width="360">
+</p>
+
+---
+
 ## Features
 
 ### Menu bar widget
