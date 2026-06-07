@@ -204,6 +204,17 @@ open MacWattage.xcodeproj
 
 > UI 文件与 `IOKitImplementation.swift` 因 `@main` 冲突 / 需要 IOKit，被 SPM 排除，**只能通过 Xcode 工程编译运行完整应用**。
 
+### 通过 build.sh（命令行快速构建）
+```bash
+# 一键编译并输出到 dist/，可任意目录执行：
+./build.sh
+
+# 构建产物位于 dist/MacWattage.app，可直接打开：
+open dist/MacWattage.app
+```
+
+> `build.sh` 基于 Debug configuration，自动切到项目根目录并在 dist/ 不存在时创建它。构建产物位于 DerivedData，脚本自动查找并复制到 `dist/` 目录。
+
 ### 通过 Swift Package Manager（仅核心库 + 测试）
 ```bash
 # 编译核心库（UI 文件被 SPM 排除）
