@@ -16,6 +16,8 @@ struct PowerPopoverView: View {
 
     var body: some View {
         VStack(spacing: 16) {
+            topBar
+
             currentWattsSection
             liveChartSection
             Divider()
@@ -32,6 +34,17 @@ struct PowerPopoverView: View {
     }
 
     // MARK: - Sections
+
+    private var topBar: some View {
+        HStack(spacing: 0) {
+            Spacer()
+
+            Button("Quit") {
+                NSApplication.shared.terminate(nil)
+            }
+            .font(.caption)
+        }
+    }
 
     private var currentWattsSection: some View {
         VStack(spacing: 2) {

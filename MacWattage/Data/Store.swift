@@ -106,21 +106,48 @@ public final class Store: ObservableObject {
 
     // MARK: - Login Items
 
-    /// Add or remove this app from the user's login items using SMLoginItemSetEnabled.
+    /// Add or remove this app from the user's login items.
     private func updateLoginItems(_ enable: Bool) {
-        guard let bundleID = Bundle.main.bundleIdentifier else { return }
+        guard let bundleURL = Bundle.main.bundleURL as? CFURL else { return }
 
-        // SMLoginItemSetEnabled requires the login item bundle ID.
-        let loginItemID = "\(bundleID).helper"
+        // Call LSSharedFileList functions via dlopen/dlsym so Store.swift compiles in SPM
+        // (LaunchServices is not linked in the SPM target).
+        let handle = dlopen(nil, RTLD_LAZY)
+        guard let sym = dlsym(handle, "LSSharedFileListCreate") else { return }
 
-        // Call SMLoginItemSetEnabled via dlopen/dlsym since the symbol may not be in this SDK.
-        let handle = dlopen(nil, RTLD_LAZY)  // Use main program's symbol table
-        if let sym = dlsym(handle, "SMLoginItemSetEnabled") {
-            typealias FuncType = @convention(c) (CFString, Bool) -> Bool
-            let fn = unsafeBitCast(sym, to: FuncType.self)
-            _ = fn(loginItemID as CFString, enable)
+        typealias CreateFunc = @convention(c) (CFAllocator?, CFString, CFString?) -> Unmanaged<LSSharedFileList>
+        let create = unsafeBitCast(sym, to: CreateFunc.self)
+
+        let loginItemTypeName = "LSSessionLoginItem" as CFString  // kLSSessionLoginItemTypeRegular
+        let loginList = create(nil, loginItemTypeName, nil).takeRetainedValue()
+
+        if enable {
+            guard let insertSym = dlsym(handle, "LSSharedFileListInsertItemURL") else { return }
+            typealias InsertFunc = @convention(c) (LSSharedFileList, LSSharedFileListItem?, CFString?, CFURL?, CFURL?, CFDictionary?) -> LSSharedFileListItem
+            let insert = unsafeBitCast(insertSym, to: InsertFunc.self)
+            _ = insert(loginList, nil, nil, bundleURL, nil, nil)
         } else {
-            // SMLoginItemSetEnabled not available on this system.
+            guard let copySym = dlsym(handle, "LSSharedFileListCopySnapshot"),
+                  let resolveSym = dlsym(handle, "LSSharedFileListItemResolve"),
+                  let removeSym = dlsym(handle, "LSSharedFileListRemoveItem") else { return }
+
+            typealias CopyFunc = @convention(c) (LSSharedFileList, CFArray?) -> Unmanaged<CFArray>
+            let copy = unsafeBitCast(copySym, to: CopyFunc.self)
+
+            typealias ResolveFunc = @convention(c) (LSSharedFileListItem, UInt32, UnsafeMutablePointer<Unmanaged<CFURL>?>?, CFDictionary?) -> OSStatus
+            let resolve = unsafeBitCast(resolveSym, to: ResolveFunc.self)
+
+            typealias RemoveFunc = @convention(c) (LSSharedFileList, LSSharedFileListItem?, CFDictionary?) -> OSStatus
+            let remove = unsafeBitCast(removeSym, to: RemoveFunc.self)
+
+            let snapshot = copy(loginList, nil).takeRetainedValue() as! [LSSharedFileListItem]
+            for item in snapshot {
+                var resolvedURL: Unmanaged<CFURL>? = nil
+                guard resolve(item, 0, &resolvedURL, nil) == noErr else { continue }
+                if let resolved = resolvedURL?.takeRetainedValue() as URL?, resolved == Bundle.main.bundleURL {
+                    _ = remove(loginList, item, nil)
+                }
+            }
         }
     }
 
