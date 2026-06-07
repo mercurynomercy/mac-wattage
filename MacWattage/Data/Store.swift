@@ -1,4 +1,5 @@
 import Foundation
+import ServiceManagement
 
 /// Lightweight UserDefaults protocol for dependency injection in tests.
 public protocol UserDefaultsProtocol: AnyObject {
@@ -36,8 +37,13 @@ public final class Store: ObservableObject {
     }
 
     /// Auto-launch at login toggle (default false). On set, updates the system login item list.
+    /// The real app reflects the actual `SMAppService` registration so the checkbox can't drift
+    /// out of sync with System Settings; injected-defaults (tests) use the stored value.
     public var autoLaunchAtLogin: Bool {
-        get { readBool(forKey: StoreKey.autoLaunchAtLogin) }
+        get {
+            if defaults != nil { return readBool(forKey: StoreKey.autoLaunchAtLogin) }
+            return SMAppService.mainApp.status == .enabled
+        }
         set {
             objectWillChange.send() // Notify SwiftUI — this is a UserDefaults-backed computed property.
             write(newValue, forKey: StoreKey.autoLaunchAtLogin)
@@ -106,48 +112,23 @@ public final class Store: ObservableObject {
 
     // MARK: - Login Items
 
-    /// Add or remove this app from the user's login items.
+    /// Add or remove this app from the user's login items via SMAppService (macOS 13+).
+    /// The legacy LSSharedFileList API is deprecated and silently no-ops on modern macOS —
+    /// it never appears under System Settings → Login Items → Open at Login.
     private func updateLoginItems(_ enable: Bool) {
-        guard let bundleURL = Bundle.main.bundleURL as? CFURL else { return }
+        // No bundle (e.g. unit tests run from the xctest runner) — skip the system call.
+        guard Bundle.main.bundleIdentifier != nil else { return }
 
-        // Call LSSharedFileList functions via dlopen/dlsym so Store.swift compiles in SPM
-        // (LaunchServices is not linked in the SPM target).
-        let handle = dlopen(nil, RTLD_LAZY)
-        guard let sym = dlsym(handle, "LSSharedFileListCreate") else { return }
-
-        typealias CreateFunc = @convention(c) (CFAllocator?, CFString, CFString?) -> Unmanaged<LSSharedFileList>
-        let create = unsafeBitCast(sym, to: CreateFunc.self)
-
-        let loginItemTypeName = "LSSessionLoginItem" as CFString  // kLSSessionLoginItemTypeRegular
-        let loginList = create(nil, loginItemTypeName, nil).takeRetainedValue()
-
-        if enable {
-            guard let insertSym = dlsym(handle, "LSSharedFileListInsertItemURL") else { return }
-            typealias InsertFunc = @convention(c) (LSSharedFileList, LSSharedFileListItem?, CFString?, CFURL?, CFURL?, CFDictionary?) -> LSSharedFileListItem
-            let insert = unsafeBitCast(insertSym, to: InsertFunc.self)
-            _ = insert(loginList, nil, nil, bundleURL, nil, nil)
-        } else {
-            guard let copySym = dlsym(handle, "LSSharedFileListCopySnapshot"),
-                  let resolveSym = dlsym(handle, "LSSharedFileListItemResolve"),
-                  let removeSym = dlsym(handle, "LSSharedFileListRemoveItem") else { return }
-
-            typealias CopyFunc = @convention(c) (LSSharedFileList, CFArray?) -> Unmanaged<CFArray>
-            let copy = unsafeBitCast(copySym, to: CopyFunc.self)
-
-            typealias ResolveFunc = @convention(c) (LSSharedFileListItem, UInt32, UnsafeMutablePointer<Unmanaged<CFURL>?>?, CFDictionary?) -> OSStatus
-            let resolve = unsafeBitCast(resolveSym, to: ResolveFunc.self)
-
-            typealias RemoveFunc = @convention(c) (LSSharedFileList, LSSharedFileListItem?, CFDictionary?) -> OSStatus
-            let remove = unsafeBitCast(removeSym, to: RemoveFunc.self)
-
-            let snapshot = copy(loginList, nil).takeRetainedValue() as! [LSSharedFileListItem]
-            for item in snapshot {
-                var resolvedURL: Unmanaged<CFURL>? = nil
-                guard resolve(item, 0, &resolvedURL, nil) == noErr else { continue }
-                if let resolved = resolvedURL?.takeRetainedValue() as URL?, resolved == Bundle.main.bundleURL {
-                    _ = remove(loginList, item, nil)
-                }
+        do {
+            if enable {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
             }
+        } catch {
+            #if DEBUG
+            NSLog("[Store] Login item update (enable=\(enable)) failed: \(error.localizedDescription)")
+            #endif
         }
     }
 
