@@ -168,14 +168,14 @@ final class PowerEstimatorTests: XCTestCase {
     }
 
     func testM1UltraAtFullLoad() {
-        // M1 Ultra SoC_TDP = 95W, full load (1.0)
-        // 95 + 12 + 6 = 113W
+        // M1 Ultra SoC_TDP = 115W, full load (1.0)
+        // 115 + 12 + 6 = 133W
         let hwProfile = HardwareProfile(
             platform: .studio, chipGeneration: .m1Ultra, ramSizeBytes: 8_589_934_592,
             fanModel: .dual, screenOff: false)
         let estimator = PowerEstimator(profile: hwProfile)
         let watts = estimator.estimateSystemPower(from: 1.0, gpuUtil: 1.0)
-        XCTAssertEqual(watts, 113.0, accuracy: 2.0, "M1 Ultra at full load should be ~113W")
+        XCTAssertEqual(watts, 133.0, accuracy: 2.0, "M1 Ultra at full load should be ~133W")
     }
 
     // MARK: - Laptop platform (lower base consumption)

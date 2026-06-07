@@ -86,9 +86,11 @@ public final class PowerEstimator: PowerEstimatorProtocol {
 
 private func memCoefficient(for ramBytes: Int64) -> Double {
     let ramGB = ramBytes / (1024 * 1024 * 1024)
+    // Power scales with RAM (more memory controllers / bandwidth → more power).
+    // Covers all shipping Apple Silicon configs from 8 GB up to 512 GB (M3 Ultra).
     let entries: [(ramGB: Int, coefficient: Double)] = [
-        (8, 1.0), (16, 1.05), (24, 1.10),
-        (64, 1.18), (96, 1.28), (192, 1.40),
+        (8, 1.00), (16, 1.05), (24, 1.08), (32, 1.10), (36, 1.12), (48, 1.15),
+        (64, 1.18), (96, 1.24), (128, 1.30), (192, 1.40), (256, 1.50), (512, 1.70),
     ]
     var result = 1.0
     for entry in entries {

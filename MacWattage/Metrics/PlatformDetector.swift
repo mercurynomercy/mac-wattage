@@ -10,10 +10,10 @@ public enum FanModel { case none, single, dual, turbo }
 
 /// Apple Silicon chip generation — used for power estimation profiles.
 public enum ChipGeneration {
-    case m1Base, m2Base, m3Base, m4Base
-    case m1Pro,  m2Pro,  m3Pro,  m4Pro
-    case m1Max,  m2Max,  m3Max,  m4Max
-    case m1Ultra, m2Ultra, m3Ultra
+    case m1Base, m2Base, m3Base, m4Base, m5Base
+    case m1Pro,  m2Pro,  m3Pro,  m4Pro,  m5Pro
+    case m1Max,  m2Max,  m3Max,  m4Max,  m5Max
+    case m1Ultra, m2Ultra, m3Ultra // M4 and M5 have no Ultra variant.
 }
 
 /// Runtime hardware detection. Uses IOKit and sysctl — never throws, always returns a valid value.
@@ -51,7 +51,7 @@ public enum PlatformDetector {
 
         let cpuString = String(cString: brand)
 
-        // Check Ultra first (must match before Pro/Max substrings)
+        // Check Ultra first (must match before Pro/Max substrings). Only M1–M3 have Ultra.
         if cpuString.contains("Ultra") {
             if cpuString.contains("M3") { return .m3Ultra }
             if cpuString.contains("M2") { return .m2Ultra }
@@ -59,6 +59,7 @@ public enum PlatformDetector {
         }
 
         if cpuString.contains("Max") {
+            if cpuString.contains("M5") { return .m5Max }
             if cpuString.contains("M4") { return .m4Max }
             if cpuString.contains("M3") { return .m3Max }
             if cpuString.contains("M2") { return .m2Max }
@@ -66,12 +67,14 @@ public enum PlatformDetector {
         }
 
         if cpuString.contains("Pro") {
+            if cpuString.contains("M5") { return .m5Pro }
             if cpuString.contains("M4") { return .m4Pro }
             if cpuString.contains("M3") { return .m3Pro }
             if cpuString.contains("M2") { return .m2Pro }
             return .m1Pro
         }
 
+        if cpuString.contains("M5") { return .m5Base }
         if cpuString.contains("M4") { return .m4Base }
         if cpuString.contains("M3") { return .m3Base }
         if cpuString.contains("M2") { return .m2Base }
