@@ -11,6 +11,9 @@ public protocol PowerLogServiceProtocol {
     /// Return the most recent N records.
     func recentRecords(count: Int) -> [PowerRecord]
 
+    /// Return the last `count` watts values from the live seconds buffer — used for the sparkline chart.
+    func sparklineWatts(count: Int) -> [Double]
+
     /// Average watts over the last 1 hour (rolling window). Returns 0.0 if no data.
     func sessionAverage() -> Double
 
@@ -137,6 +140,10 @@ public final class PowerLogService: PowerLogServiceProtocol {
 
     public func recentRecords(count: Int) -> [PowerRecord] {
         Array(dailyBuffer.suffix(count))
+    }
+
+    public func sparklineWatts(count: Int) -> [Double] {
+        secondsBuffer.suffix(count).map(\.watts)
     }
 
     // MARK: - Session Statistics (120-second rolling window from seconds buffer)

@@ -68,6 +68,10 @@ final class MockPowerLogService: NSObject, PowerLogServiceProtocol {
         Array(appendedRecords.suffix(count))
     }
 
+    func sparklineWatts(count: Int) -> [Double] {
+        appendedRecords.suffix(count).map(\.watts)
+    }
+
     func sessionAverage() -> Double {
         guard !appendedRecords.isEmpty else { return 0.0 }
         let sum = appendedRecords.reduce(0.0) { $0 + $1.watts }

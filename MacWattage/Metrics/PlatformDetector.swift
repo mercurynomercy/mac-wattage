@@ -128,7 +128,17 @@ public enum PlatformDetector {
         guard let modelCF = IORegistryEntryCreateCFProperty(root, "model" as CFString, nil, 0) else {
             return .single // fallback default
         }
-        let modelString = (modelCF.takeRetainedValue() as! CFString) as String
+        let rawValue = modelCF.takeRetainedValue()
+        // Device tree "model" is a null-terminated C string stored as CFData on Apple Silicon.
+        let modelString: String
+        if CFGetTypeID(rawValue) == CFDataGetTypeID() {
+            let cfData = rawValue as! CFData
+            modelString = CFDataGetBytePtr(cfData).map { String(cString: $0) } ?? ""
+        } else if CFGetTypeID(rawValue) == CFStringGetTypeID() {
+            modelString = rawValue as! String
+        } else {
+            return .single
+        }
 
         let model = modelString.lowercased()
 

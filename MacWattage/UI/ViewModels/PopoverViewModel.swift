@@ -7,32 +7,25 @@ import SwiftUI
     static let shared = PopoverViewModel()
 
     /// Most recent power reading in watts.
-    var currentWatts: Double = 0
+    @Published var currentWatts: Double = 0
 
     /// Average watts over the last 1-hour rolling window.
-    var sessionAverage: Double = 0
+    @Published var sessionAverage: Double = 0
 
     /// Peak (max) watts over the last 1-hour window.
-    var sessionPeak: Double = 0
+    @Published var sessionPeak: Double = 0
 
     /// Daily average watts for the last 7 days.
-    var dailyAverages: [DailyAverage] = []
+    @Published var dailyAverages: [DailyAverage] = []
 
     /// Monthly total kWh for the last 12 months.
-    var monthlyTotals: [MonthlyTotal] = []
+    @Published var monthlyTotals: [MonthlyTotal] = []
 
     /// Sparkline data points for live chart, maximum of 36 values.
-    var sparklineData: [Double] = []
+    @Published var sparklineData: [Double] = []
 
     /// Whether there is meaningful data to display beyond zero values.
     var hasData: Bool { !dailyAverages.isEmpty || !monthlyTotals.isEmpty }
-
-    /// Publisher that fires whenever data is refreshed — used by SwiftUI views to force re-render.
-    var onDataUpdate: AnyPublisher<Void, Never> {
-        NotificationCenter.default.publisher(for: Notification.Name("PopoverDataUpdated"))
-            .map { _ in () }
-            .eraseToAnyPublisher()
-    }
 
     private init() {}
 
@@ -55,42 +48,34 @@ import SwiftUI
         sessionPeak = service.sessionPeak()
         dailyAverages = service.dailyAverages(for: 7)
         monthlyTotals = service.monthlyTotals(for: 12)
-        NotificationCenter.default.post(name: Notification.Name("PopoverDataUpdated"), object: nil)
+        // Seed sparklineData from the live buffer only when it would add more data than we
+        // already have — prevents a post-flush secondsBuffer (1–2 items) from overwriting
+        // the 36-item history that updateSparkline accumulated.
+        let fresh = service.sparklineWatts(count: 36)
+        if fresh.count > sparklineData.count { sparklineData = fresh }
     }
 
     /// Append a new reading to the sparkline buffer (max 36 points).
     func updateSparkline(with record: PowerRecord) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.sparklineData.append(record.watts)
-            if self.sparklineData.count > 36 {
-                self.sparklineData = Array(self.sparklineData.suffix(36))
-            }
-            NotificationCenter.default.post(name: Notification.Name("PopoverDataUpdated"), object: nil)
+        sparklineData.append(record.watts)
+        if sparklineData.count > 36 {
+            sparklineData = Array(sparklineData.suffix(36))
         }
     }
 
     /// Update the current watts reading.
     func updateCurrentWatts(_ watts: Double) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.currentWatts = watts
-            NotificationCenter.default.post(name: Notification.Name("PopoverDataUpdated"), object: nil)
-        }
+        currentWatts = watts
     }
 
     /// Reset all state. Called when data is cleared via notification.
     func reset() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.currentWatts = 0
-            self.sessionAverage = 0
-            self.sessionPeak = 0
-            self.dailyAverages.removeAll()
-            self.monthlyTotals.removeAll()
-            self.sparklineData.removeAll(keepingCapacity: true)
-            NotificationCenter.default.post(name: Notification.Name("PopoverDataUpdated"), object: nil)
-        }
+        currentWatts = 0
+        sessionAverage = 0
+        sessionPeak = 0
+        dailyAverages.removeAll()
+        monthlyTotals.removeAll()
+        sparklineData.removeAll(keepingCapacity: true)
     }
 
     private var service: PowerLogServiceProtocol? = nil

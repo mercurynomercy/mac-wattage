@@ -97,6 +97,7 @@ struct MacWattageApp: App {
         } label: {
             MenuBarWidgetView()
         }
+        .menuBarExtraStyle(.window) // .window hosts arbitrary SwiftUI (charts); .menu flattens to menu items.
 
         Settings {
             SettingsWindowView()

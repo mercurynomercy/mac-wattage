@@ -1,42 +1,65 @@
 import SwiftUI
 
-/// A compact sparkline chart for displaying a series of power values.
+/// A compact area sparkline chart for displaying a series of power values.
+/// Uses SwiftUI `Path` shapes (not `Canvas`) — `Canvas` fails to render inside MenuBarExtra popovers.
 struct SparklineView: View {
     let values: [Double]
 
     var body: some View {
-        Group {
-            if values.isEmpty || values.count < 2 {
-                EmptyView()
-            } else {
-                Path { path in
-                    let count = values.count
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
 
-                    // Use percentage-based scaling so small variations (e.g. 22–23W)
-                    // remain visually meaningful even when absolute differences are tiny.
-                    let maxVal = values.max() ?? 0.0
-                    let minVal = values.min() ?? 0.0
+            // Filled area gradient.
+            areaPath(w: w, h: h)
+                .fill(
+                    LinearGradient(
+                        colors: [.blue.opacity(0.45), .blue.opacity(0.85)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
 
-                    for (index, value) in values.enumerated() {
-                        // Normalize x across [0, 1] then scale to chart width (40px).
-                        let x = Double(index) / Double(count - 1) * 40.0
-                        // Normalize y using percentage of actual range, inverted (SwiftUI Y goes down),
-                        // and scaled to chart height (~20px). Clamp to [0, 1] so identical values
-                        // still render at the midpoint rather than clipping to an edge.
-                        let actualRange = maxVal - minVal
-                        let normalizedY: Double = actualRange > 0 ? (value - minVal) / actualRange : 0.5
-                        let clampedY = max(0.0, min(normalizedY, 1.0))
-                        let y = (1.0 - clampedY) * 20.0
-
-                        if index == 0 {
-                            path.move(to: CGPoint(x: x, y: y))
-                        } else {
-                            path.addLine(to: CGPoint(x: x, y: y))
-                        }
-                    }
-                }
-                .stroke(Color.black, lineWidth: 1.5)
-            }
+            // Stroke line on top.
+            linePath(w: w, h: h)
+                .stroke(Color.blue, lineWidth: 1.5)
         }
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    private func yFor(_ v: Double, h: Double) -> Double {
+        let maxVal = values.max() ?? 0
+        let minVal = values.min() ?? 0
+        let range = maxVal - minVal
+        let norm: Double = range > 0 ? (v - minVal) / range : 0.5
+        return (1.0 - max(0, min(norm, 1))) * h
+    }
+
+    private func point(_ i: Int, _ v: Double, w: Double, h: Double) -> CGPoint {
+        let count = values.count
+        let x = count > 1 ? Double(i) / Double(count - 1) * w : 0
+        return CGPoint(x: x, y: yFor(v, h: h))
+    }
+
+    private func linePath(w: Double, h: Double) -> Path {
+        var path = Path()
+        guard values.count >= 2 else { return path }
+        for (i, v) in values.enumerated() {
+            let pt = point(i, v, w: w, h: h)
+            if i == 0 { path.move(to: pt) } else { path.addLine(to: pt) }
+        }
+        return path
+    }
+
+    private func areaPath(w: Double, h: Double) -> Path {
+        var path = Path()
+        guard values.count >= 2 else { return path }
+        path.move(to: CGPoint(x: 0, y: h))
+        for (i, v) in values.enumerated() {
+            path.addLine(to: point(i, v, w: w, h: h))
+        }
+        path.addLine(to: CGPoint(x: w, y: h))
+        path.closeSubpath()
+        return path
     }
 }

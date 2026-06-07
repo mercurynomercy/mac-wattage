@@ -1,45 +1,45 @@
 import SwiftUI
 
 struct PowerPopoverView: View {
-    private let viewModel = PopoverViewModel.shared
+    // @State guarantees re-renders — @ObservedObject is unreliable inside MenuBarExtra content views.
+    @State private var currentWatts: Double = 0
+    @State private var sessionAverage: Double = 0
+    @State private var sessionPeak: Double = 0
+    @State private var dailyAverages: [DailyAverage] = []
+    @State private var monthlyTotals: [MonthlyTotal] = []
+    @State private var sparklineData: [Double] = []
 
-    @State private var refreshTrigger: Bool = false
+    private var hasData: Bool { !dailyAverages.isEmpty || !monthlyTotals.isEmpty }
+
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(spacing: 16) {
             currentWattsSection
-
             liveChartSection
-
             Divider()
-
             sevenDayChartSection
-
             Divider()
-
             monthlyTotalsSection
-
             Divider()
-
             settingsButton
         }
         .frame(width: 320)
         .padding()
-        .onAppear { viewModel.refresh() } // Reload aggregated data when popover opens.
-        .onReceive(viewModel.onDataUpdate) { _ in refreshTrigger.toggle() } // Force re-render when data changes.
-        .background(Color.clear.opacity(self.refreshTrigger ? 0 : 1)) // Make refreshTrigger a real dependency so SwiftUI re-renders
+        .onAppear { sync() }
+        .onReceive(timer) { _ in sync() }
     }
 
     // MARK: - Sections
 
     private var currentWattsSection: some View {
         VStack(spacing: 4) {
-            if viewModel.hasData {
-                Text("\(viewModel.currentWatts, specifier: "%.0f")W")
+            if hasData {
+                Text("\(currentWatts, specifier: "%.0f")W")
                     .font(.system(size: 32, weight: .bold, design: .monospaced))
                     .foregroundColor(.black)
 
-                Text("Avg: \(viewModel.sessionAverage, specifier: "%.1f")W · Peak: \(viewModel.sessionPeak, specifier: "%.1f")W")
+                Text("Avg: \(sessionAverage, specifier: "%.1f")W · Peak: \(sessionPeak, specifier: "%.1f")W")
                     .foregroundColor(.black)
                     .font(.caption)
             } else {
@@ -55,12 +55,12 @@ struct PowerPopoverView: View {
             Text("Live Power")
                 .font(.headline)
 
-            if viewModel.sparklineData.count < 2 {
+            if sparklineData.count < 2 {
                 Text("Collecting data...")
                     .font(.caption)
                     .foregroundColor(.secondary)
             } else {
-                SparklineView(values: viewModel.sparklineData)
+                SparklineView(values: sparklineData)
                     .frame(height: 60)
             }
         }
@@ -71,12 +71,12 @@ struct PowerPopoverView: View {
             Text("7-Day Power Consumption")
                 .font(.headline)
 
-            if viewModel.dailyAverages.isEmpty {
+            if dailyAverages.isEmpty {
                 Text("No data yet")
                     .font(.caption)
                     .foregroundColor(.secondary)
             } else {
-                BarChartView(data: viewModel.dailyAverages)
+                BarChartView(data: dailyAverages)
                     .frame(height: 80)
             }
         }
@@ -87,12 +87,12 @@ struct PowerPopoverView: View {
             Text("Monthly Totals")
                 .font(.headline)
 
-            if viewModel.monthlyTotals.isEmpty {
+            if monthlyTotals.isEmpty {
                 Text("No data yet")
                     .font(.caption)
                     .foregroundColor(.secondary)
             } else {
-                MonthlyTotalsView(totals: viewModel.monthlyTotals)
+                MonthlyTotalsView(totals: monthlyTotals)
                     .frame(maxHeight: 168) // ~12 rows × (14px + 2px spacing).
             }
         }
@@ -101,8 +101,21 @@ struct PowerPopoverView: View {
     private var settingsButton: some View {
         Button("Settings") {
             NSApp.activate(ignoringOtherApps: true)
-            NotificationCenter.default.post(name: PowerPopoverView.openSettings, object: nil) // Signal to the app delegate that settings should open.
+            NotificationCenter.default.post(name: PowerPopoverView.openSettings, object: nil)
         }
+    }
+
+    // MARK: - Data sync
+
+    private func sync() {
+        let vm = PopoverViewModel.shared
+        vm.refresh()
+        currentWatts = vm.currentWatts
+        sessionAverage = vm.sessionAverage
+        sessionPeak = vm.sessionPeak
+        dailyAverages = vm.dailyAverages
+        monthlyTotals = vm.monthlyTotals
+        sparklineData = vm.sparklineData
     }
 
     // MARK: - Notification names
