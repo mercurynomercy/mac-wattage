@@ -210,13 +210,18 @@ public final class PowerLogService: PowerLogServiceProtocol {
         let calendar = Calendar.current
         var totals: [MonthlyTotal] = []
 
+        // Anchor buckets to the first day of the current calendar month. Using "today minus N
+        // months" instead would offset every bucket by today's day-of-month, splitting records
+        // across the wrong month (e.g. on June 8, June 1–7 would fall into a "May" bucket).
+        let currentMonthStart = calendar.date(
+            from: calendar.dateComponents([.year, .month], from: Date())
+        ) ?? calendar.startOfDay(for: Date())
 
         for monthOffset in 0 ..< months {
-            guard let originalDate = calendar.date(
-                byAdding: .month, value: -monthOffset, to: Date()
+            guard let monthStart = calendar.date(
+                byAdding: .month, value: -monthOffset, to: currentMonthStart
             ) else { continue }
 
-            let monthStart = calendar.startOfDay(for: originalDate)
             let monthEnd = calendar.date(
                 byAdding: .month, value: 1, to: monthStart
             ) ?? Date.distantFuture
